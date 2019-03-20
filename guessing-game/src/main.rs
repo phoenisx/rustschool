@@ -1,5 +1,9 @@
+// https://github.com/adeschamps/lsm303/commit/15be707404f9caebde2abcb1af3c3154493e0a43
+#![allow(unused_doc_comments)]
 /**
  * Breakdown #1:
+ *  - Above statement is called Rust Attributes, Details [here](https://doc.rust-lang.org/reference/attributes.html)
+ *  - Single/Multi Line Comment[s].
  */
 // This is Single Line Comment
 /*
