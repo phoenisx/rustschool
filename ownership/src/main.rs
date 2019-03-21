@@ -159,8 +159,8 @@ fn main() {
         println!("6. Pass by reference (Mutable)");
         println!("7. Immutable Reference vs Mutable Reference");
         println!("8. Dangling Reference");
-        // I feel like `Slicing` an array of data is not part of Ownership, thus will add examples for that
-        // in Range Examples.
+        // Slicing in Ownership Chapter can be looked into https://doc.rust-lang.org/book/ch04-03-slices.html
+        // as the details that presents is based on above knowledge of Ownership...
 
         let mut option = String::new();
         io::stdin().read_line(&mut option)

@@ -3,6 +3,8 @@
 Code Samples for varius Rust Features to get a heads on Rust-Lang, based on [Rust Book](https://doc.rust-lang.org/book/).
 It is considered:
   - That you have some knowledge in programming, and have worked with some language before...
+    - Best is if you have worked with some kind of OO Language (like Java) and also Functional language (like Javascript)
+      as Rust uses many mixed concepts from both OOP and Functional Programming.
   - That you have read [Chap-1](https://doc.rust-lang.org/book/) from the Rust Book, for initial setups.
 
 ## Rust Book with Examples:
