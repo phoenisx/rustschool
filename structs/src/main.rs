@@ -71,6 +71,29 @@ fn create_from(user: User) -> User {
 #[derive(Debug)]
 struct Color(u8, u8, u8); // (Red, Green, Blue)
 
+/**
+ * Breakdown #5:
+ *  - Implementing a Method (function bound to an instance) for Struct
+ *  - Type of self is Color due to this method being inside the impl Color context
+ *  - Methods can take ownership of self, borrow self immutably (as done below),
+ *      or borrow self mutably, just as they can any other parameter.
+ *  - Also, impl blocks can have one or more methods in it defined
+ */
+impl Color {
+    /// @param {u8} percent: represent amount to be lighten from color (0 - 100)
+    fn red(&self) -> u8 {
+        self.0
+    }
+
+    fn green(&self) -> u8 {
+        self.1
+    }
+
+    fn blue(&self) -> u8 {
+        self.2
+    }
+}
+
 fn main() {
     let mut choice = String::new();
     loop {
@@ -80,6 +103,8 @@ fn main() {
         println!("\t3. Is inner member of struct immutable as well?");
         println!("\t4. From other user instance");
         println!("\t5. Instantiate Color Tuple");
+        println!("\t6. Color Struct Method example");
+        println!("\t7. Test Color Impls after method call statement is already done, with associated methods");
 
         std::io::stdin().read_line(&mut choice)
             .expect("Input Save failed...");
@@ -98,15 +123,54 @@ fn main() {
                 // Needed to use Clone trait, as simply passing would move the ownership
                 // While passing a reference throws error for `cannot move out of borrowed content`.
                 let user2 = create_from(user.clone());
-                println!("=== User1 created: {:?}", user);
-                println!("=== User2 created from User1: {:?}\n", user2);
+                println!("=== User1 created: {:#?}", user);
+                println!("=== User2 created from User1: {:#?}\n", user2);
             },
             "5" => {
                 let color = Color(122, 255, 150);
                 println!("Struct Tuple example: {:?}", color);
                 println!("Access a single value from tuple struct: {}\n", color.2);
             },
+            "6" => {
+                let color = Color(100, 100, 100).darken(20);
+                println!("Darken Color using Instance Method: {:#?}", color);
+                println!("Red: {:#?}", color.red());
+                println!("Green: {:#?}", color.green());
+                println!("Blue: {:#?}\n", color.blue());
+            },
+            "7" => println!("Lighten Color using Struct Associated Method: {:#?}\n", Color::lighten(Color(100, 100, 100), 20)),
             _ => break
         }
+    }
+}
+
+/**
+ * Breakdown #5:
+ *  - This Breakdown is to check if method implementaion after the method is already called workd in Rust or not.
+ *      -- And it works...
+ *  - We can have separate impl blocks as well...
+ *  - This Breakdown also shows Associated methods to Struct, or we can say, static methods...
+ */
+impl Color {
+    /**
+     * Breakdown #6:
+     *  - One thing is clear from the following function. A Mutable Owner can be converted to an Immutable Owner while
+     *      it's getting moved.
+     */
+    /// @param {u8} percent: represent amount to be lighten from color (0 - 100)
+    fn darken(mut self, percent: u8) -> Color {
+        self.0 -= percent;
+        self.1 -= percent;
+        self.2 -= percent;
+        self
+    }
+
+    /// This Will Consume the passed color's ownership as well...
+    fn lighten(color: Color, percent: u8) -> Color {
+        Color(
+            color.0 + percent,
+            color.1 + percent,
+            color.2 + percent
+        )
     }
 }
