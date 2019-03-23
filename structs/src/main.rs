@@ -95,8 +95,8 @@ impl Color {
 }
 
 fn main() {
-    let mut choice = String::new();
     loop {
+        let mut choice = String::new();
         println!("Make a choice:");
         println!("\t1. Usual Struct Creation");
         println!("\t2. Struct Creation using (field init shorthand), similar to ES6 Object Property Shorthand");
