@@ -1,6 +1,9 @@
 // Helps to hide dead code warnings for the whole file...
 #![allow(dead_code)]
 
+// IMPORTANT NOTE: Not showing any examples for https://doc.rust-lang.org/book/ch06-03-if-let.html, as it's all
+// Syntactical Sugar... Depends on what user prefers to use. Match Expressions are more ellaborate compared to `if let` statements...
+
 use std::io;
 
 #[derive(Debug)]
