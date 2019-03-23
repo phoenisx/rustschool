@@ -21,7 +21,7 @@ It is considered:
 - **[Chap-7](https://doc.rust-lang.org/book/ch07-00-packages-crates-and-modules.html)**: _What Happens If_[[source](./what-happens-if)]
   - Well this chapter gives breakdowns on Packages, Crates from the Book
   - Also, to make things interesting, whatever doubts I have regarding various ways of Rust will go in here.
-    So If you have a doubt like _What happens if Vector is not given a type and data is pushed somewhere else_, note it down in this chapter or open a PR.
+    [Rust Playground](https://play.rust-lang.org/) is a great place to test doubtfull codes...
 
 ## TODO
 

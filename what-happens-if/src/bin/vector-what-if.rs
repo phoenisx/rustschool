@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 fn change_scope(vector: &mut Vec<i32>) {
   vector.push(45);
 }
