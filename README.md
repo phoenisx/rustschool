@@ -18,10 +18,13 @@ It is considered:
   - Helps you understand using Structs and what Structure Related Data is.
 - **[Chap-6](https://doc.rust-lang.org/book/ch06-00-enums.html)**: _Enums_ [[source](./enums)]
   - Basics on Enums and Match Expression used for Enums...
-- **[Chap-7](https://doc.rust-lang.org/book/ch07-00-packages-crates-and-modules.html)**: _What Happens If_[[source](./what-happens-if)]
+- **[Chap-7](https://doc.rust-lang.org/book/ch07-00-packages-crates-and-modules.html)**: _What Happens If_ [[source](./what-happens-if)]
   - Well this chapter gives breakdowns on Packages, Crates from the Book
   - Also, to make things interesting, whatever doubts I have regarding various ways of Rust will go in here.
     [Rust Playground](https://play.rust-lang.org/) is a great place to test doubtfull codes...
+- **[Chap-12](https://doc.rust-lang.org/book/ch12-00-an-io-project.html)**: _Mini Grep Tool_ [[source](./minigrep)]
+  - It's difficult to write examples for each chapter, as they are very vast concepts (and I'm still learning).
+    So, it's better to learn from real life examples. This, Crate will create a small mini grep, that works on the basic stuffs learnt in previous chapters.
 
 ## TODO
 

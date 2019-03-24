@@ -12,6 +12,9 @@
 #[derive(Clone, Debug)] // https://doc.rust-lang.org/rust-by-example/trait/clone.html
 struct User {
     name: String,
+    // Why the Type is `&'static str`, instead of `&str`, Check this https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html#lifetime-elision
+    // And according to this following should be `&'a str`, with struct also having a lifetime of it's own.
+    // For now as the app is just for example purpose, it's fine to use static lifetime...
     email: &'static str, // https://www.reddit.com/r/rust/comments/2o8r94/why_is_a_string_literal_not_always_of_type_str/
     age: u8,
     active: bool
