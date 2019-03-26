@@ -1,0 +1,3 @@
+// Basically I separated out Config, only to test re-exports...
+mod config;
+pub use config::config::Config;
