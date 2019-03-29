@@ -4,7 +4,7 @@ use std::fs;
 
 // Basically I separated out Config, only to test re-exports...
 mod config;
-pub use config::config::Config;
+pub use config::Config;
 
 ///
 /// This method is the main cycle, which runs the logical part of the application.
