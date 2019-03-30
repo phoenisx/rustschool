@@ -16,7 +16,12 @@ mod search;
 ///
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
   let file_data = fs::read_to_string(config.get_filename())?; // Propagating Error to caller.
-  let found = search::search(config.get_query(), &file_data);
+  let found: Vec<&str>;
+  if *config.is_sensitive() {
+    found = search::search(config.get_query(), &file_data);
+  } else {
+    found = search::search_case_insensitive(config.get_query(), &file_data);
+  }
   println!("Found: {:?}", found);
   Ok(())
 }
