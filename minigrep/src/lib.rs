@@ -6,6 +6,8 @@ use std::fs;
 mod config;
 pub use config::Config;
 
+mod search;
+
 ///
 /// This method is the main cycle, which runs the logical part of the application.
 /// It can throw error, but nothing is returned when it passes.
@@ -13,8 +15,8 @@ pub use config::Config;
 /// @returns Result<Ok, Err>
 ///
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let file_data = fs::read_to_string(config.get_filename())?; // Propagating Error to caller.
-    println!("File Data: {}", file_data);
-
-    Ok(())
+  let file_data = fs::read_to_string(config.get_filename())?; // Propagating Error to caller.
+  let found = search::search(config.get_query(), &file_data);
+  println!("Found: {:?}", found);
+  Ok(())
 }
