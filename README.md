@@ -24,10 +24,14 @@ It is considered:
     [Rust Playground](https://play.rust-lang.org/) is a great place to test doubtfull codes...
 - **[Chap-10]()**: _Generic Types, Traits, Lifetimes_
   - **[Chap-10.2](https://doc.rust-lang.org/book/ch10-02-traits.html)**: _Traits_[[source](./traits)]
+    - Contains Examples for traits
+    - Contains Example for splitting modules into folders.
 - **[Chap-11](https://doc.rust-lang.org/book/ch11-00-testing.html)**: _Testing(TDD)_ [[source](./testing)]
 - **[Chap-12](https://doc.rust-lang.org/book/ch12-00-an-io-project.html)**: _Mini Grep Tool_ [[source](./minigrep)]
   - It's difficult to write examples for each chapter, as they are very vast concepts (and I'm still learning).
     So, it's better to learn from real life examples. This, Crate will create a small mini grep, that works on the basic stuffs learnt in previous chapters.
+- **[Chap-13](https://doc.rust-lang.org/book/ch13-00-functional-features.html)**: _Funtional Language Features_ [[source](./functional)]
+  - Good and Bad examples for Funcational Programming in Rust...
 
 ## TODO
 
