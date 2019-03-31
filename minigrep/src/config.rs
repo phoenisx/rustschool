@@ -7,13 +7,16 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &'static str> {
-        // args[1] -> String, Therefore, &args[1] -> &String...
-        if args.len() < 3 {
-            return Err("Required arguments: [regexp] [filepath]");
-        }
-        let query = args[1].clone();
-        let filename = args[2].clone();
+    pub fn new(mut args: env::Args) -> Result<Config, &'static str> {
+        args.next(); // This points to the command name arg...
+        let query = match args.next() {
+            Some(query) => query,
+            None => return Err("No Query provided for search") // Since we want to trhow error, not store a value back to query here...
+        };
+        let filename = match args.next() {
+            Some(filename) => filename,
+            None => return Err("No Filename provided for search")
+        };
         let is_case_sensitive = env::var("CASE_INSENSITIVE").is_err(); // Flase if ENV is present (regardless of value), else true.
 
         Ok(Config {
