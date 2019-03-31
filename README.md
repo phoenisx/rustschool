@@ -31,6 +31,7 @@ It is considered:
   - It's difficult to write examples for each chapter, as they are very vast concepts (and I'm still learning).
     So, it's better to learn from real life examples. This, Crate will create a small mini grep, that works on the basic stuffs learnt in previous chapters.
 - **[Chap-13](https://doc.rust-lang.org/book/ch13-00-functional-features.html)**: _Funtional Language Features_ [[source](./functional)]
+  - Closures, Iterators.
   - Good and Bad examples for Funcational Programming in Rust...
 
 ## TODO
