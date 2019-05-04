@@ -1,10 +1,15 @@
-use std::fmt::Debug;
+use std::fmt;
+use std::mem;
 
 // https://leetcode.com/explore/learn/card/linked-list/
 // Also, will be using the guide https://rust-unofficial.github.io/too-many-lists/
 
 // Following is the representation for the Data Structure
 // for Singly Linked List
+#[derive(Debug)]
+struct List<T> {
+  head: Option<Box<Node<T>>> // Should own the Node for head, may or may not have the Node on creation
+}
 
 // Currently this data-type can store only a single type of consistent data for one instance of list
 #[derive(Debug)]
@@ -24,12 +29,23 @@ struct Iter<'a, T> {
   next: Option<&'a Node<T>>
 }
 
-impl<T: Debug> Node<T> {
-  fn new(data: T) -> Node<T> {
-    Node {
-      data,
-      next: None
+impl<T: fmt::Debug> List<T> {
+  fn new() -> List<T> {
+    List {
+      head: None
     }
+  }
+
+  // Works on the principle of LIFO, thus, insertion is an O(1) task
+  // as we just create a new node, add old head to this new node.next,
+  // and reassign self.head to new node...
+  fn push(&mut self, data: T) {
+    let node = Node {
+      data,
+      next: mem::replace(&mut self.head, None)
+    };
+
+    self.head = Some(Box::new(node));
   }
 
   // Following is required for Making `Node` struct return an
@@ -40,7 +56,7 @@ impl<T: Debug> Node<T> {
       // i.e., `Box will turn into `&Box`
       // So, we need to dereference &Box twice nad then return &node of that.
       // `node` here is a reference to `Box`, thus &**node is &Node
-      next: self.next.as_ref().map( |node| &**node )
+      next: self.head.as_ref().map( |node| &**node )
     }
   }
 }
@@ -57,21 +73,18 @@ impl<'a, T> Iterator for Iter<'a, T> {
   }
 }
 
-fn add<T>(head: &mut Node<T>, node: Node<T>) {
-  head.next = Some(Box::new(node));
-}
-
 fn main () {
-  let mut head = Node::new(24);
-  add(&mut head, Node::new(12));
-  add(&mut head, Node::new(14));
+  let mut list = List::new();
+  list.push(12);
+  list.push(24);
 
   println!("::Inside Loop::");
-  print!("[");
-  for data in head.iter() {
-    print!("{:?}, ", data);
+  let mut iterator = list.iter();
+  print!("[{:?}", iterator.next().unwrap());
+  for data in iterator {
+    print!(", {:?}", data);
   }
   println!("]");
 
-  println!("List: {:?}", head);
+  println!("List: {:?}", list);
 }
