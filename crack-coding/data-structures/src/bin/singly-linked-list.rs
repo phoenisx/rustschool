@@ -29,7 +29,7 @@ struct Iter<'a, T> {
   next: Option<&'a Node<T>>
 }
 
-impl<T: fmt::Debug> List<T> {
+impl<T> List<T> {
   fn new() -> List<T> {
     List {
       head: None
@@ -46,6 +46,17 @@ impl<T: fmt::Debug> List<T> {
     };
 
     self.head = Some(Box::new(node));
+  }
+
+  fn pop(&mut self) -> Option<T> {
+    // this mem::replace looks safe, as per https://doc.rust-lang.org/std/mem/
+    match mem::replace(&mut self.head, None) {
+      None => None,
+      Some(node) => {
+        self.head = node.next;
+        Some(node.data)
+      }
+    }
   }
 
   // Following is required for Making `Node` struct return an
@@ -73,11 +84,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
   }
 }
 
-fn main () {
-  let mut list = List::new();
-  list.push(12);
-  list.push(24);
-
+fn print_list<T: fmt::Debug>(list: &List<T>) {
   println!("::Inside Loop::");
   let mut iterator = list.iter();
   print!("[{:?}", iterator.next().unwrap());
@@ -85,6 +92,18 @@ fn main () {
     print!(", {:?}", data);
   }
   println!("]");
+}
 
-  println!("List: {:?}", list);
+fn main () {
+  let mut list = List::new();
+  list.push(12);
+  list.push(24);
+  list.push(32);
+
+  print_list(&list);
+
+  let tail = list.pop();
+
+  print_list(&list);
+  println!("Popped Node: {:?}", tail);
 }
