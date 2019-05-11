@@ -17,4 +17,5 @@ fn main() {
   println!("{:?}", list);
 
   println!("{:?}", string_list);
+  println!("{:?}", string_list.peek());
 }

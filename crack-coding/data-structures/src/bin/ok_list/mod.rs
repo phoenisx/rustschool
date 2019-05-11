@@ -4,6 +4,14 @@
 // To be noted: Since any of the structs or enums don't have pub scope specifier
 // they all will be treated as private members...
 
+/**
+ * Breakdown #2:
+ *
+ * - If I somehow want to store a generic that can be of any type, it is wise
+ *   to create an enum/struct with a generic member, this way I have to push struct instance
+ *   inside the list, where struct instance could be of any random type.
+ */
+
 #[derive(Debug)]
 pub struct List<T> {
   head: Link<T>,
@@ -46,6 +54,11 @@ impl<T> List<T> {
       self.head = node.next;
       node.elem
     })
+  }
+
+  // This will preserve the ownership of node.
+  pub fn peek(&self) -> Option<&T> {
+    self.head.as_ref().map(|node| &node.elem)
   }
 }
 
