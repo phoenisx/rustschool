@@ -55,3 +55,21 @@ impl List {
   }
 }
 
+/**
+ * Note to self: In Tutorials, Drop trait is specifically implemented, to handle Stack overflow dues to
+ * recursion function calls. So, even if the Drop trait is implemented properly for all our data types,
+ * it should be noted, at some point, when List size grows, dropping each item in list, would pile up the
+ * function stack and thus lead to stack overflow in the end. So we need to implement our own Drop trait
+ */
+
+impl Drop for List {
+  fn drop (&mut self) {
+    // Set everything to None, so that we don't get a function stack on drop, for recursive drops
+    // instead this will be just one function call, dropping all Box<Node>, by triggering `drop` by replacing
+    // Link to none, which will make previous link an invalid memory and should be removed.
+    while let Some(mut node) = mem::replace(&mut self.head, None) {
+      self.head = mem::replace(&mut node.next, None);
+    }
+  }
+}
+
