@@ -5,23 +5,23 @@
 // they all will be treated as private members...
 
 #[derive(Debug)]
-pub struct List {
-  head: Link,
+pub struct List<T> {
+  head: Link<T>,
 }
 
 // Better way to shorten the re-used types, using aliases...
 // Think of Link as a special pointer, which stores the node location
 // and also owns it.
-type Link = Option<Box<Node>>;
+type Link<T> = Option<Box<Node<T>>>;
 
 #[derive(Debug)]
-struct Node {
-  elem: i32,
-  next: Link,
+struct Node<T> {
+  elem: T,
+  next: Link<T>,
 }
 
-impl List {
-  pub fn new() -> List {
+impl<T> List<T> {
+  pub fn new() -> Self {
     List { head: None }
   }
 
@@ -33,7 +33,7 @@ impl List {
    *    from self.head's ownership, so that we can mutate self.head to some other
    *    Option value (if needed), which is not possible due to borrow checker...
    */
-  pub fn push(&mut self, elem: i32) {
+  pub fn push(&mut self, elem: T) {
     self.head = Some(Box::new(Node {
       elem,
       next: self.head.take(),
@@ -41,7 +41,7 @@ impl List {
   }
 
   // this is lifo list, so latest head should be popped
-  pub fn pop(&mut self) -> Option<i32> {
+  pub fn pop(&mut self) -> Option<T> {
     self.head.take().map(|node| {
       self.head = node.next;
       node.elem
@@ -56,7 +56,7 @@ impl List {
  * function stack and thus lead to stack overflow in the end. So we need to implement our own Drop trait
  */
 
-impl Drop for List {
+impl<T> Drop for List<T> {
   fn drop(&mut self) {
     // Set everything to None, so that we don't get a function stack on drop, for recursive drops
     // instead this will be just one function call, dropping all Box<Node>, by triggering `drop` by replacing
