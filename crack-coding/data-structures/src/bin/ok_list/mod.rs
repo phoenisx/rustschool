@@ -1,14 +1,12 @@
 // Ok so this is a complete copy of what I have learnt from
 // https://rust-unofficial.github.io/too-many-lists/second.html
 
-
 // To be noted: Since any of the structs or enums don't have pub scope specifier
 // they all will be treated as private members...
-use std::mem;
 
 #[derive(Debug)]
 pub struct List {
-  head: Link
+  head: Link,
 }
 
 // Better way to shorten the re-used types, using aliases...
@@ -23,7 +21,7 @@ struct Node {
 }
 
 impl List {
-  pub fn new () -> List {
+  pub fn new() -> List {
     List { head: None }
   }
 
@@ -35,23 +33,19 @@ impl List {
    *    from self.head's ownership, so that we can mutate self.head to some other
    *    Option value (if needed), which is not possible due to borrow checker...
    */
-  pub fn push (&mut self, elem: i32) {
-    let node = Box::new(Node {
+  pub fn push(&mut self, elem: i32) {
+    self.head = Some(Box::new(Node {
       elem,
-      next: mem::replace(&mut self.head, None)
-    });
-
-    self.head = Some(node);
+      next: self.head.take(),
+    }));
   }
 
   // this is lifo list, so latest head should be popped
-  pub fn pop (&mut self) -> Option<i32> {
-    if let Some(boxed_node) = mem::replace(&mut self.head, None) {
-      self.head = boxed_node.next;
-      Some(boxed_node.elem)
-    } else {
-      None
-    }
+  pub fn pop(&mut self) -> Option<i32> {
+    self.head.take().map(|node| {
+      self.head = node.next;
+      node.elem
+    })
   }
 }
 
@@ -63,13 +57,12 @@ impl List {
  */
 
 impl Drop for List {
-  fn drop (&mut self) {
+  fn drop(&mut self) {
     // Set everything to None, so that we don't get a function stack on drop, for recursive drops
     // instead this will be just one function call, dropping all Box<Node>, by triggering `drop` by replacing
     // Link to none, which will make previous link an invalid memory and should be removed.
-    while let Some(mut node) = mem::replace(&mut self.head, None) {
-      self.head = mem::replace(&mut node.next, None);
+    while let Some(mut node) = self.head.take() {
+      self.head = node.next.take();
     }
   }
 }
-
