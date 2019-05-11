@@ -7,15 +7,15 @@ use std::mem;
 // Following is the representation for the Data Structure
 // for Singly Linked List
 #[derive(Debug)]
-struct List<T> {
-  head: Option<Box<Node<T>>> // Should own the Node for head, may or may not have the Node on creation
+pub struct List<T> {
+  head: Option<Box<Node<T>>>, // Should own the Node for head, may or may not have the Node on creation
 }
 
 // Currently this data-type can store only a single type of consistent data for one instance of list
 #[derive(Debug)]
 struct Node<T> {
   data: T,
-  next: Option<Box<Node<T>>>
+  next: Option<Box<Node<T>>>,
 }
 
 // Iterating in Rust can be done immutably/mutable, thus it is
@@ -26,14 +26,12 @@ struct Node<T> {
 struct Iter<'a, T> {
   // Will return a reference, instead of boxed reference, as we don't want the actual owner to
   // lose ownership.
-  next: Option<&'a Node<T>>
+  next: Option<&'a Node<T>>,
 }
 
 impl<T> List<T> {
   fn new() -> List<T> {
-    List {
-      head: None
-    }
+    List { head: None }
   }
 
   // Works on the principle of LIFO, thus, insertion is an O(1) task
@@ -42,7 +40,7 @@ impl<T> List<T> {
   fn push(&mut self, data: T) {
     let node = Node {
       data,
-      next: mem::replace(&mut self.head, None)
+      next: mem::replace(&mut self.head, None),
     };
 
     self.head = Some(Box::new(node));
@@ -67,7 +65,7 @@ impl<T> List<T> {
       // i.e., `Box will turn into `&Box`
       // So, we need to dereference &Box twice nad then return &node of that.
       // `node` here is a reference to `Box`, thus &**node is &Node
-      next: self.head.as_ref().map( |node| &**node )
+      next: self.head.as_ref().map(|node| &**node),
     }
   }
 }
@@ -78,7 +76,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
   fn next(&mut self) -> Option<Self::Item> {
     self.next.map(|node| {
       // store the next Node reference, so that, we
-      self.next = node.next.as_ref().map( |node| &**node ); // same thing as inter()
+      self.next = node.next.as_ref().map(|node| &**node); // same thing as inter()
       &node.data // return a reference to data for loop, as we don't want to change ownership
     })
   }
@@ -94,7 +92,7 @@ fn print_list<T: fmt::Debug>(list: &List<T>) {
   println!("]");
 }
 
-fn main () {
+fn main() {
   let mut list = List::new();
   list.push(12);
   list.push(24);
