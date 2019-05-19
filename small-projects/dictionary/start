@@ -2,4 +2,11 @@
 
 # This overrides .env `LANG` environment variable
 LANG=en
-cargo run -- $@
+
+ARG_SIZE=${#@}
+if [ $ARG_SIZE -gt 0 ]; then
+  cargo run -- $@
+else
+  cargo run
+fi
+

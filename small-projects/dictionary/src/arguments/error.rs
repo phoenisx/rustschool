@@ -11,6 +11,10 @@ impl Error {
   pub fn new(kind: ErrorKind) -> Self {
     Error { kind }
   }
+
+  pub fn kind(&self) -> &ErrorKind {
+    &self.kind
+  }
 }
 
 /**
@@ -21,13 +25,15 @@ impl Error {
  */
 #[derive(Debug)]
 pub enum ErrorKind {
-  Too_Many(usize),
+  NoArgs,
+  TooMany(usize),
 }
 
 impl ErrorKind {
   pub fn as_str(&self) -> &str {
     match *self {
-      ErrorKind::Too_Many(count) => "too many arguments",
+      ErrorKind::NoArgs => "no arguments passed",
+      ErrorKind::TooMany(count) => "too many arguments",
     }
   }
 }
