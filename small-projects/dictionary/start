@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# This overrides .env `LANG` environment variable
+LANG=en
+cargo run -- $@
