@@ -63,6 +63,58 @@ impl<T> List<T> {
 }
 
 /**
+ * It is a good practise in rust to implement all three types of iterators
+ * for custom collection data structures...
+ *
+ * - IntoIter - to get ownership on collection elements, and consume them
+ * - Iter - to get immutable reference on collection items, without consuming them
+ * - IterMut - to get mutable reference on collection items, without consuming them
+ */
+
+pub struct IntoIter<T>(List<T>);
+
+impl<T> Iterator for IntoIter<T> {
+  type Item = T;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    // We just need to pass ownership by popping head
+    // This way the whole list will be consumed after loop iteration finishes.
+    self.0.pop()
+  }
+}
+
+pub struct Iter<'a, T> {
+  next: Option<&'a Node<T>>,
+}
+
+impl<'a, T> Iterator for Iter<'a, T> {
+  type Item = &'a T;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    self.next.map(|node| {
+      self.next = node.next.as_ref().map(|node| &**node);
+      &node.elem
+    })
+  }
+}
+
+impl<T> List<T> {
+  // passing `self`, instead of `&self` or `&mut self` shifts the ownership to Iterator
+  pub fn into_iter(self) -> IntoIter<T> {
+    IntoIter(self)
+  }
+
+  // passing head boxed node, so that we can loop through it's next property, till it becomes `None`
+  pub fn iter(&self) -> Iter<T> {
+    Iter {
+      next: self.head.as_ref().map(|node| &**node),
+    }
+  }
+
+  // TODO: Create a method that converts List to an Array, using it's iterators
+}
+
+/**
  * Note to self: In Tutorials, Drop trait is specifically implemented, to handle Stack overflow dues to
  * recursion function calls. So, even if the Drop trait is implemented properly for all our data types,
  * it should be noted, at some point, when List size grows, dropping each item in list, would pile up the
@@ -78,4 +130,33 @@ impl<T> Drop for List<T> {
       self.head = node.next.take();
     }
   }
+}
+
+// All my tests goes here...
+#[test]
+fn consumeIterators() {
+  let mut list = List::new();
+  list.push(1);
+  list.push(2);
+  list.push(3);
+
+  let mut iter = list.into_iter();
+  assert_eq!(iter.next(), Some(3)); // Since it's a LIFO structure
+  assert_eq!(iter.next(), Some(2)); // Since it's a LIFO structure
+  assert_eq!(iter.next(), Some(1)); // Since it's a LIFO structure
+  assert_eq!(iter.next(), None);
+}
+
+#[test]
+fn immuteIteratorNonConsummable() {
+  let mut list = List::new();
+  list.push(1);
+  list.push(2);
+  list.push(3);
+
+  let mut iter = list.iter();
+  assert_eq!(iter.next(), Some(&3)); // Since it's a LIFO structure
+  assert_eq!(iter.next(), Some(&2)); // Since it's a LIFO structure
+  assert_eq!(iter.next(), Some(&1)); // Since it's a LIFO structure
+  assert_eq!(iter.next(), None);
 }
