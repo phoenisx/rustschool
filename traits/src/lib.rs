@@ -1,4 +1,8 @@
+use std::fmt::Display;
+
 mod ultimate_mod;
+mod override_types;
+use override_types::HashBuilder;
 pub use ultimate_mod::prelude::*;
 
 pub struct Human {
@@ -27,5 +31,23 @@ impl Human {
 impl Shinobi for Human {
   fn chakra_type(&self) {
     println!("Has Wind type Chakra");
+  }
+}
+
+pub struct HashTable<K, V> {
+  key: K,
+  value: V
+}
+
+impl<K: HashBuilder + Display, V: Display> HashTable<K, V> {
+  pub fn new(key: K, value: V) -> HashTable<K, V> {
+    HashTable {
+      key,
+      value
+    }
+  }
+
+  pub fn printMe(&self) {
+    println!("Key: {}, Hash: {}, Value: {}", self.key, self.key.build(), self.value);
   }
 }
