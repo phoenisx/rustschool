@@ -1,3 +1,6 @@
+#![allow(unused)]
+#![allow(dead_code)]
+#![allow(non_snake_case)]
 // Ok so this is a complete copy of what I have learnt from
 // https://rust-unofficial.github.io/too-many-lists/second.html
 

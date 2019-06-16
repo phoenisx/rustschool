@@ -1,3 +1,5 @@
+#![allow(unused)]
+#![allow(dead_code)]
 // Well this is a very naive and simple implementation fo Hash map in rust.
 // It's just to learn Rust, via data structures...
 // Simplefied becoz I will concentrate only for number and strings as keys...
@@ -49,10 +51,11 @@ impl HashBuilder for String {
 //   }
 // }
 
+#[derive(Clone)]
 struct HashNode<K, V> {
   key: K,
   val: V,
-  next: Option<Box<HashNode<K, V>>>
+  next: Option<Box<HashNode<K, V>>>,
 }
 
 impl<K, V> HashNode<K, V> {
@@ -60,28 +63,34 @@ impl<K, V> HashNode<K, V> {
     Self {
       key,
       val,
-      next: None
+      next: None,
     }
   }
 }
 
 pub struct HashMap<K: HashBuilder, V> {
-  table: Vec<HashNode<K, V>>, // We need to store hashes in tables
+  table: Vec<Option<HashNode<K, V>>>, // We need to store hashes in tables
 }
 
 impl<K, V> HashMap<K, V>
 where
-  K: HashBuilder,
+  K: HashBuilder + Clone,
+  V: Clone,
 {
   pub fn new() -> Self {
     Self {
-      table: Vec::with_capacity(MAX_CAPACITY as usize)
+      table: vec![None; MAX_CAPACITY as usize],
     }
   }
 
   pub fn put(&mut self, key: K, val: V) {
     let hash = key.hash();
-    // let node = &mut self.table[hash];
-    match node
+    let node = self.table.get(hash);
+    match node {
+      Some(node) => {
+        // Do Something
+      }
+      None => self.table.insert(hash, Some(HashNode::new(key, val))),
+    }
   }
 }
