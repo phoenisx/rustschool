@@ -8,6 +8,12 @@
 // https://github.com/contain-rs/linked-hash-map/blob/master/src/lib.rs
 // https://doc.rust-lang.org/stable/book/ch19-01-unsafe-rust.html
 
+// Following is a very naive implementation, and might be even a bad code
+// in terms of memory usage and stuff, but this is the simplest form of HashTable
+// that anyone can learn from, using safe code in Rust...
+
+use std::collections::LinkedList;
+
 static MAX_CAPACITY: u8 = 30u8;
 
 pub trait HashBuilder {
@@ -55,42 +61,71 @@ impl HashBuilder for String {
 struct HashNode<K, V> {
   key: K,
   val: V,
-  next: Option<Box<HashNode<K, V>>>,
 }
 
 impl<K, V> HashNode<K, V> {
   fn new(key: K, val: V) -> Self {
-    Self {
-      key,
-      val,
-      next: None,
-    }
+    Self { key, val }
+  }
+}
+
+impl<K: PartialEq, V> Eq for HashNode<K, V> {}
+impl<K: PartialEq, V> PartialEq for HashNode<K, V> {
+  fn eq(&self, other: &Self) -> bool {
+    self.key == other.key
   }
 }
 
 pub struct HashMap<K: HashBuilder, V> {
-  table: Vec<Option<HashNode<K, V>>>, // We need to store hashes in tables
+  table: Vec<Vec<HashNode<K, V>>>, // We need to store hashes in tables
 }
 
 impl<K, V> HashMap<K, V>
 where
-  K: HashBuilder + Clone,
-  V: Clone,
+  K: PartialEq + HashBuilder + Clone,
+  V: PartialEq + Clone,
 {
   pub fn new() -> Self {
     Self {
-      table: vec![None; MAX_CAPACITY as usize],
+      table: vec![Vec::new(); MAX_CAPACITY as usize],
     }
   }
 
   pub fn put(&mut self, key: K, val: V) {
     let hash = key.hash();
-    let node = self.table.get(hash);
-    match node {
-      Some(node) => {
-        // Do Something
+    let new_node = HashNode::new(key, val);
+    let node: &mut Vec<HashNode<K, V>> = self.table.get_mut(hash).unwrap(); // Since I know, it is already pre-populated, unwrap will never panic.
+
+    let mut index = 0;
+    let mut found_index: Option<usize> = None;
+    // find index
+    for ele in node.iter() {
+      if (*ele == new_node) {
+        found_index = Some(index);
+        break;
       }
-      None => self.table.insert(hash, Some(HashNode::new(key, val))),
+      index += 1;
     }
+    // node.push_back(HashNode::new(key, val));
+    match found_index {
+      Some(i) =>
+      // For simplicity, for now, will not care about similar key replacements, if the key already exists.
+      // Will just push to the list, even though it is similar data.
+      {
+        node[i] = new_node;
+      } // Should actually replace the data, instead of appending
+      None => node.push(new_node),
+    }
+  }
+
+  pub fn get(&self, key: K) -> Option<&V> {
+    let hash = key.hash();
+    let node: &Vec<HashNode<K, V>> = self.table.get(hash).unwrap();
+    for ele in node.iter() {
+      if (ele.key == key) {
+        return Some(&ele.val);
+      }
+    }
+    None
   }
 }
