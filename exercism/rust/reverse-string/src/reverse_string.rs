@@ -19,6 +19,10 @@ pub fn reverse(original: &str) -> String {
   return reversed;
 }
 
+pub fn simple_reverse(original: &str) -> String {
+  return original.chars().rev().collect::<String>();
+}
+
 pub fn grapheme_reverse(original: &str) -> String {
   let original_uchars = UnicodeSegmentation::graphemes(original, true).collect::<Vec<&str>>();
   let size = original_uchars.len();
