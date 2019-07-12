@@ -1,3 +1,6 @@
+// Using conditional match and functional way of creating the String vector
+// inspired from https://exercism.io/tracks/rust/exercises/beer-song/solutions/d09a5886cc9349c3a0cdbe3659fa5bfd answer...
+
 pub fn map_to_verse(n: i32) -> (String, String, String, String) {
   match n {
     0 => (
@@ -12,7 +15,13 @@ pub fn map_to_verse(n: i32) -> (String, String, String, String) {
       String::from("Take it down and pass it around"),
       String::from("no more bottles"),
     ),
-    _ => (
+    n if n < 0 || n > 99 => (
+      String::from("Unknown bottles"),
+      "unknown bottles".to_string(),
+      String::from("Go to the store and buy some more"),
+      String::from("unknown bottles"),
+    ),
+    n => (
       format!("{} bottles", n),
       format!("{} bottles", n),
       String::from("Take one down and pass it around"),
@@ -30,14 +39,9 @@ pub fn verse(n: i32) -> String {
 }
 
 pub fn sing(start: i32, end: i32) -> String {
-  let mut counter = start;
-  let mut output = String::from("");
-  while counter >= end {
-    output.push_str(&verse(counter));
-    if counter != end {
-      output.push_str("\n");
-    }
-    counter -= 1;
-  }
-  return output;
+  (end..start + 1)
+    .rev()
+    .map(|n| verse(n))
+    .collect::<Vec<String>>()
+    .join("\n")
 }
