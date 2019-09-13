@@ -28,7 +28,10 @@ Rustschool is divided into different sections of learning:
   My implementations for questions in [Cracking the Coding Interview Book](cracking-interview-book).
 
 ## [GUI](./gui):
-  Implementations using Azul library to understand how azul works and what things we can do to learn building GUI.
-  I am hoping to help and support `azul` by contributing to azul source code (someday)/.
+  Implementations using:
+    * Azul (for GUI)
+    * Piston (for Gaming)
+    * GGez (for Gaming)
+  For now I am focusing only on GGez for game development, which interests me a lot.
 
 [cracking-interview-book]: https://www.amazon.in/dp/0984782850/ref=cm_sw_r_tw_dp_U_x_m6spDb843CZ6B
