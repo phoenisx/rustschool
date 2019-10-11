@@ -1,6 +1,3 @@
-// Learn from https://github.com/ggez/ggez/blob/master/docs/guides/HelloGgez.md
-// But the code is modified to work with actual graphics...
-
 use ggez::*;
 
 struct GameState {
@@ -28,7 +25,7 @@ impl event::EventHandler for GameState {
 
         // Not sure how efficient, setting the text on each render loop, is???
         self.g_text = graphics::Text::new(format!("Hello World: {}ms", self.dt.subsec_millis()));
-        let dest_point = nalgebra::Point2::new(2.0, 10.0);
+        let dest_point = ggez::nalgebra::Point2::new(2.0, 10.0);
         graphics::draw(ctx, &self.g_text, graphics::DrawParam::default().dest(dest_point))?;
         graphics::present(ctx)?;
         // println!("Hello ggez! dt = {}ns", self.dt.subsec_nanos());
