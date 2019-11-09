@@ -33,4 +33,5 @@ It is considered:
 - **[Chap-13](https://doc.rust-lang.org/book/ch13-00-functional-features.html)**: _Funtional Language Features_ [[source](./functional)]
   - Closures, Iterators.
   - Good and Bad examples for Funcational Programming in Rust...
+- **Chap-15+**: Remaining Chapters (essentials only) [[source](./remaining)]
 
