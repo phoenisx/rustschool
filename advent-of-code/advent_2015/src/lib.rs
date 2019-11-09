@@ -14,11 +14,9 @@ impl Display for Input {
 impl Input {
     pub fn new() -> Self {
         let mut input = Input { data: String::default() };
-
         // `read_to_string` requires EOF, to finish up itself...
         match io::stdin().read_to_string(&mut input.data) {
             _ => input,
         }
-
     }
 }
