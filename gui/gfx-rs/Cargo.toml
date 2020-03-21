@@ -1,0 +1,34 @@
+[package]
+name = "learn-gfx-rs"
+version = "0.1.0"
+authors = ["Shub1427 <shub1493biswas@gmail.com>"]
+edition = "2018"
+
+[features]
+default = []
+metal = ["gfx-backend-metal"]
+dx12 = ["gfx-backend-dx12"]
+vulkan = ["gfx-backend-vulkan"]
+
+[[bin]]
+name = "show_window"
+path = "src/show_window.rs"
+
+[dependencies]
+winit = "0.22.0"
+gfx-hal = "0.4.1"
+log = "0.4.0"
+simple_logger = "1.6.0"
+
+[dependencies.gfx-backend-vulkan]
+version = "0.4.2"
+features = ["x11"]
+optional = true
+
+[target.'cfg(target_os = "macos")'.dependencies.gfx-backend-metal]
+version = "0.4.2"
+optional = true
+
+[target.'cfg(windows)'.dependencies.gfx-backend-dx12]
+version = "0.4.2"
+optional = true
