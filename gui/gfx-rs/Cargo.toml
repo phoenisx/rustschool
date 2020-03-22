@@ -12,7 +12,11 @@ vulkan = ["gfx-backend-vulkan"]
 
 [[bin]]
 name = "show_window"
-path = "src/show_window.rs"
+path = "src/001-show_window/main.rs"
+
+[[bin]]
+name = "add_background"
+path = "src/030-add_background/main.rs"
 
 [dependencies]
 winit = "0.22.0"

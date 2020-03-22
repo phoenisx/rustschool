@@ -6,6 +6,7 @@ use winit::{
 };
 use gfx_hal::{
     window as hal_window,
+    format::{ self as hal_format, AsFormat },
     Backend,
     Instance
 };
@@ -15,7 +16,9 @@ use gfx_backend_dx12 as back;
 use gfx_backend_metal as back;
 #[cfg(feature = "vulkan")]
 use gfx_backend_vulkan as back;
-use log::{debug};
+use log::{debug, info};
+
+pub type ColorFormat = hal_format::Rgba8Srgb;
 
 // #region Constants
 const DIMS: hal_window::Extent2D = hal_window::Extent2D {
@@ -53,7 +56,7 @@ fn create_backend(
 ) -> BackendState<back::Backend> {
     let window = wb.build(event_loop).unwrap();
     let instance =
-        back::Instance::create("gfx-rs colour-uniform", 1).expect("Failed to create an instance!");
+        back::Instance::create("Add Background", 1).expect("Failed to create an instance!");
     let surface = unsafe {
         instance
             .create_surface(&window)
@@ -85,6 +88,8 @@ fn main() {
     #[allow(unused_variables)]
     let backend = create_backend(window_builder, &event_loop);
 
+    info!("Color Self: {:?}", ColorFormat::SELF);
+
     event_loop.run(move |event, _, control_flow| {
         *control_flow = event_loop::ControlFlow::Wait;
         match event {
@@ -113,10 +118,10 @@ fn main() {
                 }
             }
             event::Event::RedrawRequested(_) => {
-                debug!("RedrawRequested");
+                // debug!("RedrawRequested");
             }
             event::Event::RedrawEventsCleared => {
-                debug!("RedrawEventsCleared");
+                // debug!("RedrawEventsCleared");
             }
             _ => (),
         }
