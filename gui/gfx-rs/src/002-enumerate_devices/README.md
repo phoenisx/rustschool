@@ -8,8 +8,8 @@
   a vector, that has Device details as elements. Each item pointing to the GPU hardware you have.
   So, if you have Single NVidia GPU, you will get a single item vector, having details on that device.
 * Logical Device - Basically it is a representation of Physical device, that the application will use
-  to compute their logic. In `gfx-hal` physical/logical device details are merged together, and a single
-  adapter consists of details for the device and can be used to pass command buffers as well.
+  to compute their logic. In `gfx-hal` to get logical device, you need to open `physical_device`.
+  (Details discussed at the end).
 
 ## What details does a device has
 
@@ -66,3 +66,21 @@
   So, `queue_flags: GRAPHICS` can accept only graphics related operations in Command Buffer.
 
   For an ellaborated explanation, see this [thread](https://stackoverflow.com/a/55273688/2849127)
+
+## Logical Devices
+
+![Logical-Device](https://user-images.githubusercontent.com/11786283/77247969-01ba5080-6c5c-11ea-8202-3c83e1a25b51.png)
+
+```rs
+let mut gpu = unsafe {
+  adapter
+    .physical_device
+    .open(&[(&adapter.queue_families[0], &[1.0])], gfx_hal::Features::empty())
+    .unwrap()
+};
+
+// Logical Device
+println!("Logical Device: {:#?}", gpu.device);
+```
+
+We will be using Logical Devices to create Command Pools and Buffer to pass onto GPU.

@@ -19,6 +19,10 @@ name = "enumerate_devices"
 path = "src/002-enumerate_devices/main.rs"
 
 [[bin]]
+name = "command_buffers"
+path = "src/003-command_buffers/main.rs"
+
+[[bin]]
 name = "add_background"
 path = "src/030-add_background/main.rs"
 
