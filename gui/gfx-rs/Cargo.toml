@@ -32,19 +32,19 @@ path = "src/030-add_background/main.rs"
 
 [dependencies]
 winit = "0.22.0"
-gfx-hal = "0.4.1"
+gfx-hal = "0.5.0"
 log = "0.4.0"
-simple_logger = "1.6.0"
+log4rs = "0.11.0"
 
 [dependencies.gfx-backend-vulkan]
-version = "0.4.2"
+version = "0.5.0"
 features = ["x11"]
 optional = true
 
 [target.'cfg(target_os = "macos")'.dependencies.gfx-backend-metal]
-version = "0.4.2"
+version = "0.5.0"
 optional = true
 
 [target.'cfg(windows)'.dependencies.gfx-backend-dx12]
-version = "0.4.2"
+version = "0.5.0"
 optional = true

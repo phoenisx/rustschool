@@ -6,9 +6,10 @@ use gfx_backend_metal as back;
 use gfx_backend_vulkan as back;
 use gfx_hal::{prelude::*, Features, Instance};
 use log::debug;
+use log4rs;
 
 fn main() {
-    simple_logger::init().unwrap();
+    log4rs::init_file("log4rs.yml", Default::default()).unwrap();
     let instance = back::Instance::create("Create Instance with Window", 1)
         .expect("Failed to create an instance!");
     let adapters = instance.enumerate_adapters();
@@ -28,4 +29,9 @@ fn main() {
     debug!("GPU: {:#?}", gpu);
     // gpu.device, can be considered as logical device, as it will be used to get Command Pools and stuff
     debug!("Logical device: {:#?}", gpu.device);
+
+    // Get Supported Memory Types by adapter
+    for (index, adapter) in adapters.iter().enumerate() {
+        debug!("Memory Properties[{}]: {:#?}", index, adapter.physical_device.memory_properties());
+    }
 }
