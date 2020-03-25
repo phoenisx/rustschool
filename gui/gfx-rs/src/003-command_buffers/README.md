@@ -1,6 +1,6 @@
 # Command Buffers
 
-![Command-Buffer](https://user-images.githubusercontent.com/11786283/77254365-9d60b680-6c86-11ea-8733-ca977df06fc5.png)
+![Command-Buffer](https://user-images.githubusercontent.com/11786283/77256537-ff281d00-6c94-11ea-8e05-d49d8a24aaab.png)
 
 Command Buffer can be though of a set of execution commands, kept as a buffer,
 and passed to Device Queue to later on pass to Driver to execute them.
