@@ -19,4 +19,19 @@ fn main() {
     println!("Same Typed Tuples: {:#?}", same_type_tuples());
 
     println!("Same Typed Tuples: {:?}", diff_type_tuples());
+
+    // Yes `()` this is a type in Rust, to denote `void`.
+    println!("Empty/Void Data: {:?}", ());
+
+    // Variable Shadowing, meaning same named variable can have two different types
+    // where the last found variable in the Block, should be used.
+    let i_am_number_and_boolean = 12;
+    println!("What am I: {}", i_am_number_and_boolean);
+
+    {
+        let i_am_number_and_boolean = true;
+        println!("What am I now: {}", i_am_number_and_boolean);
+    }
+    let i_am_number_and_boolean = 12.445; // f64
+    println!("What am I, at last: {}", i_am_number_and_boolean);
 }
