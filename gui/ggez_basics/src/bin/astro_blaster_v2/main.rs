@@ -20,7 +20,8 @@ impl World {
 }
 
 impl event::EventHandler for World {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult {
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
+        self.player.update(ctx)?;
         Ok(())
     }
 
