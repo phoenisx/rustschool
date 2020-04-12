@@ -1,9 +1,9 @@
-use ggez::event;
-use ggez::graphics;
-use ggez::{Context, ContextBuilder, GameResult};
+use ggez::{conf, event, graphics, Context, ContextBuilder, GameResult};
 
 mod player;
+mod constants;
 use player::Player;
+use constants::{VIEWPORT_WIDTH, VIEWPORT_HEIGHT};
 
 struct World {
     stage: usize, // Nothing else for now.
@@ -34,9 +34,15 @@ impl event::EventHandler for World {
 }
 
 fn main() -> GameResult {
+    let window_config = conf::Conf::new();
+    let win_mode = conf::WindowMode::default();
+    let window_config = window_config.window_mode(win_mode.dimensions(
+        VIEWPORT_WIDTH, VIEWPORT_HEIGHT
+    ));
     // Resource DIR should be relative to root DIR.
-    let resource_dir = "./src/bin/astro_blaster_v2/resources";
+    let resource_dir = "./astro_blaster_v2/resources";
     let (ctx, event_loop) = &mut ContextBuilder::new("Astro Blaster v2", "Subroto Biswas")
+        .conf(window_config)
         .add_resource_path(resource_dir)
         .build()?;
     let mut state = World::new(ctx)?;

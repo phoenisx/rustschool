@@ -1,0 +1,342 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'astro_blaster_v2'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--lib",
+          "--package=astro_blaster_v2"
+        ],
+        "filter": {
+          "name": "astro_blaster_v2",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'astro_blaster_v2'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=astro_blaster_v2",
+          "--package=astro_blaster_v2"
+        ],
+        "filter": {
+          "name": "astro_blaster_v2",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'astro_blaster_v2'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=astro_blaster_v2",
+          "--package=astro_blaster_v2"
+        ],
+        "filter": {
+          "name": "astro_blaster_v2",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'random_walk_ggez'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--lib",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "random_walk_ggez",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable '001_super_simple'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=001_super_simple",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "001_super_simple",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable '001_super_simple'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=001_super_simple",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "001_super_simple",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'circle'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=circle",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "circle",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'circle'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=circle",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "circle",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'drawing'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=drawing",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "drawing",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'drawing'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=drawing",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "drawing",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'hello_world'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=hello_world",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "hello_world",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'hello_world'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=hello_world",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "hello_world",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'snake_game'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=snake_game",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "snake_game",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'snake_game'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=snake_game",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "snake_game",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'astro_blaster'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=astro_blaster",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "astro_blaster",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'astro_blaster'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=astro_blaster",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "astro_blaster",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'physics'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=physics",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "physics",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'physics'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=physics",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "physics",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

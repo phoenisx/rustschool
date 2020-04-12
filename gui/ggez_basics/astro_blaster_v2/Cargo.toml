@@ -1,13 +1,8 @@
 [package]
-name = "random_walk_ggez"
+name = "astro_blaster_v2"
 version = "0.1.0"
 authors = ["Shub1427 <shub1493biswas@gmail.com>"]
 edition = "2018"
-
-[workspace]
-members = [
-  "astro_blaster_v2"
-]
 
 [dependencies]
 ggez = "0.5"

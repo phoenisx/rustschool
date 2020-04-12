@@ -81,6 +81,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "astro_blaster_v2"
+version = "0.1.0"
+dependencies = [
+ "alga 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ggez 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nalgebra 0.18.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide2d 0.20.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nphysics2d 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nphysics_testbed2d 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "atty"
 version = "0.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
