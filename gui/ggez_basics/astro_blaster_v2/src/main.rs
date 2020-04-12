@@ -5,6 +5,9 @@ mod constants;
 use player::Player;
 use constants::{VIEWPORT_WIDTH, VIEWPORT_HEIGHT};
 
+const VIEWPORT_WIDTH: f32 = 1280.0;
+const VIEWPORT_HEIGHT: f32 = 720.0;
+
 struct World {
     stage: usize, // Nothing else for now.
     player: Player,

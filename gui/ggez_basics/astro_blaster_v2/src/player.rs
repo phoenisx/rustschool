@@ -57,6 +57,7 @@ impl Player {
             dx = -1.0;
         }
         self.pos = nalgebra::Point2::new(self.pos.x + dx, self.pos.y + dy);
+        self.bbox = graphics::Rect::new(self.pos.x, self.pos.y, self.image.width() as f32, self.image.height() as f32);
         Ok(())
     }
 }

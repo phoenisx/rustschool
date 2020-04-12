@@ -7,62 +7,6 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug unit tests in library 'astro_blaster_v2'",
-      "cargo": {
-        "args": [
-          "test",
-          "--no-run",
-          "--lib",
-          "--package=astro_blaster_v2"
-        ],
-        "filter": {
-          "name": "astro_blaster_v2",
-          "kind": "lib"
-        }
-      },
-      "args": [],
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "Debug executable 'astro_blaster_v2'",
-      "cargo": {
-        "args": [
-          "build",
-          "--bin=astro_blaster_v2",
-          "--package=astro_blaster_v2"
-        ],
-        "filter": {
-          "name": "astro_blaster_v2",
-          "kind": "bin"
-        }
-      },
-      "args": [],
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "Debug unit tests in executable 'astro_blaster_v2'",
-      "cargo": {
-        "args": [
-          "test",
-          "--no-run",
-          "--bin=astro_blaster_v2",
-          "--package=astro_blaster_v2"
-        ],
-        "filter": {
-          "name": "astro_blaster_v2",
-          "kind": "bin"
-        }
-      },
-      "args": [],
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
       "name": "Debug unit tests in library 'random_walk_ggez'",
       "cargo": {
         "args": [
@@ -332,6 +276,43 @@
         ],
         "filter": {
           "name": "physics",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'astro_blaster_v2'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=astro_blaster_v2",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "astro_blaster_v2",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'astro_blaster_v2'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=astro_blaster_v2",
+          "--package=random_walk_ggez"
+        ],
+        "filter": {
+          "name": "astro_blaster_v2",
           "kind": "bin"
         }
       },
