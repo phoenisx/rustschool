@@ -86,10 +86,15 @@ impl CustomText {
 struct GameState {
     text: CustomText,
     push: push::Push,
+    border: graphics::Mesh,
+    paddle_rect: graphics::Mesh,
+    ball_circle: graphics::Mesh,
+    dpi_factor: f32,
 }
 
 impl GameState {
     fn new(ctx: &mut Context) -> GameResult<Self> {
+        let dpi_factor = graphics::window(ctx).get_hidpi_factor() as f32;
         let text = CustomText::new(ctx, String::from("Hello Pong!"));
         let push = push::Push::new(
             ctx,
@@ -98,7 +103,31 @@ impl GameState {
             WINDOW_WIDTH,
             WINDOW_HEIGHT,
         )?;
-        Ok(GameState { text, push })
+        Ok(GameState {
+            text,
+            push,
+            border: graphics::Mesh::new_rectangle(
+                ctx,
+                graphics::DrawMode::Stroke(graphics::StrokeOptions::default()),
+                graphics::Rect::new(1.0, 1.0, WINDOW_WIDTH - 2.0, WINDOW_HEIGHT - 2.0),
+                Color::from_rgb(180, 100, 140),
+            )?,
+            paddle_rect: graphics::Mesh::new_rectangle(
+                ctx,
+                graphics::DrawMode::Fill(graphics::FillOptions::default()),
+                graphics::Rect::new(10.0, 30.0, 10.0, 40.0),
+                Color::from_rgb(255, 255, 255),
+            )?,
+            ball_circle: graphics::Mesh::new_circle(
+                ctx,
+                graphics::DrawMode::Fill(graphics::FillOptions::default()),
+                Point2::new(WINDOW_WIDTH / 2.0 - (2.0 * dpi_factor), WINDOW_HEIGHT / 2.0 - (2.0 * dpi_factor)),
+                4.0 * dpi_factor,
+                3.0,
+                Color::from_rgb(255, 255, 255),
+            )?,
+            dpi_factor,
+        })
     }
 }
 
@@ -114,22 +143,29 @@ impl EventHandler for GameState {
 
         // Even though our canvas is of small virtual_size, but it still takes the actual window size
         // Somthing I guess ggez messes up internally. Thus, for any draw call, use the actual WINDOW_* Size
-        let mesh = graphics::Mesh::new_rectangle(
-            ctx,
-            graphics::DrawMode::Stroke(graphics::StrokeOptions::default()),
-            graphics::Rect::new(1.0, 1.0, WINDOW_WIDTH - 2.0, WINDOW_HEIGHT - 2.0),
-            Color::from_rgb(180, 100, 140),
-        )?;
 
         self.text.printf(
             ctx, // I could've passed a string here instead, and never used a CustomText struct, but this is ok as well.
             0.0,
-            (WINDOW_HEIGHT / 2.0) - (self.text.height as f32 / 2.0),
+            20.0 * self.dpi_factor,
             WINDOW_WIDTH,
             TextPosition::CENTER,
         )?;
 
-        graphics::draw(ctx, &mesh, DrawParam::default())?;
+        // Every Draw calls, require to be multiplied by dpi_factor, ggez is confusing when comes to scaling
+        graphics::draw(ctx, &self.paddle_rect, DrawParam::default())?;
+        graphics::draw(
+            ctx,
+            &self.paddle_rect,
+            DrawParam::default().dest(Point2::new(WINDOW_WIDTH - 30.0, WINDOW_HEIGHT - 110.0)),
+        )?;
+        graphics::draw(
+            ctx,
+            &self.ball_circle,
+            DrawParam::default(),
+        )?;
+
+        graphics::draw(ctx, &self.border, DrawParam::default())?;
 
         self.push.end(ctx)?;
 
