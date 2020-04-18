@@ -2,7 +2,7 @@
  * This Chapter focuses on Printing just a Text, at the center of the Screen.
  */
 use ggez::event::{self, EventHandler};
-use ggez::graphics::{self, Color, DrawParam, Text, TextFragment, Scale};
+use ggez::graphics::{self, Color, DrawParam, Scale, Text, TextFragment};
 use ggez::nalgebra::Point2;
 use ggez::{conf, Context, ContextBuilder, GameResult};
 
@@ -96,5 +96,8 @@ fn main() -> GameResult {
         .window_mode(conf::WindowMode::default().dimensions(WINDOW_WIDTH, WINDOW_HEIGHT))
         .build()?;
     let state = &mut GameState::new(ctx);
+
+    println!("Default Filter Mode: {:?}", graphics::default_filter(ctx));
+
     event::run(ctx, event_loop, state)
 }

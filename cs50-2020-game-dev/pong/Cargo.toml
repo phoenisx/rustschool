@@ -1,4 +1,5 @@
 [workspace]
 members = [
-  "pong-0"
+  "pong-0",
+  "pong-1"
 ]
