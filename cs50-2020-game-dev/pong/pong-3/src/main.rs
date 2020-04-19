@@ -3,10 +3,10 @@
 /**
  * This Chapter focuses on Printing just a Text, at the center of the Screen.
  */
-use ggez::event::{self, EventHandler};
+use ggez::event::{self, EventHandler, KeyCode};
 use ggez::graphics::{self, Color, DrawParam, FilterMode, Font, Scale, Text, TextFragment};
 use ggez::nalgebra::{Point2, Vector2};
-use ggez::{conf, filesystem, Context, ContextBuilder, GameResult};
+use ggez::{conf, timer, filesystem, Context, ContextBuilder, GameResult};
 
 use std::{env, path};
 
@@ -19,6 +19,7 @@ use player::{Player};
 use ball::{Ball};
 use custom_text::{CustomText, TextPosition};
 
+pub const DESIRED_FPS: u32 = 60;
 pub const WINDOW_WIDTH: f32 = 1280.0;
 pub const WINDOW_HEIGHT: f32 = 720.0;
 
@@ -33,6 +34,8 @@ const BALL_RADIUS: f32 = 4.0;
 /// that contains our Text mesh.
 struct GameState {
     text: CustomText,
+    player1_score_text: CustomText,
+    player2_score_text: CustomText,
     push: push::Push,
     player1: Player,
     player2: Player,
@@ -56,12 +59,30 @@ impl GameState {
             WINDOW_WIDTH - (PADDLE_WIDTH * dpi_factor) - 10.0,
             WINDOW_HEIGHT - (PADDLE_HEIGHT * dpi_factor) - 30.0
         );
+        let player1 = Player::new(
+            ctx,
+            PADDLE_WIDTH,
+            PADDLE_HEIGHT,
+            Point2::new(10.0, 30.0),
+            Some((KeyCode::W, KeyCode::S))
+        )?;
+        let player2 = Player::new(
+            ctx,
+            PADDLE_WIDTH,
+            PADDLE_HEIGHT,
+            player2_pos,
+            None
+        )?;
+        let player1_score_text = CustomText::new(ctx, player1.get_score_string(), Some(64.0));
+        let player2_score_text = CustomText::new(ctx, player2.get_score_string(), Some(64.0));
 
         Ok(GameState {
             text,
+            player1_score_text,
+            player2_score_text,
             push,
-            player1: Player::new(ctx, PADDLE_WIDTH, PADDLE_HEIGHT, Point2::new(10.0, 30.0))?,
-            player2: Player::new(ctx, PADDLE_WIDTH, PADDLE_HEIGHT, player2_pos)?,
+            player1,
+            player2,
             border: graphics::Mesh::new_rectangle(
                 ctx,
                 graphics::DrawMode::Stroke(graphics::StrokeOptions::default()),
@@ -78,7 +99,12 @@ impl GameState {
 }
 
 impl EventHandler for GameState {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult {
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
+        while timer::check_update_time(ctx, DESIRED_FPS) {
+            let elapsed_time = 1.0 / DESIRED_FPS as f32;
+            self.player1.update(ctx, elapsed_time)?;
+            self.player2.update(ctx, elapsed_time)?;
+        }
         Ok(())
     }
 
@@ -95,8 +121,23 @@ impl EventHandler for GameState {
             ctx, // I could've passed a string here instead, and never used a CustomText struct, but this is ok as well.
             0.0,
             20.0 * self.dpi_factor,
-            WINDOW_WIDTH,
-            TextPosition::CENTER,
+            Some(WINDOW_WIDTH),
+            Some(TextPosition::CENTER),
+        )?;
+
+        self.player1_score_text.printf(
+            ctx,
+            WINDOW_WIDTH / 2.0 - 100.0,
+            WINDOW_HEIGHT / 3.0,
+            None,
+            None
+        )?;
+        self.player2_score_text.printf(
+            ctx,
+            WINDOW_WIDTH / 2.0 + 50.0,
+            WINDOW_HEIGHT / 3.0,
+            None,
+            None
         )?;
 
         // Every Draw calls, require to be multiplied by dpi_factor, ggez is confusing when comes to scaling

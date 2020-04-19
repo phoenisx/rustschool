@@ -51,15 +51,25 @@ impl CustomText {
         ctx: &mut Context,
         start_x: f32,
         start_y: f32,
-        width: f32,
-        position: TextPosition,
+        width: Option<f32>,
+        position: Option<TextPosition>,
     ) -> GameResult {
         let mut x = start_x;
         match position {
-            TextPosition::CENTER => {
-                x = (width / 2.0) - (self.width as f32 / (2.0 * self.dpi_factor))
+            Some(TextPosition::CENTER) => {
+                match width {
+                    Some(width) => {
+                        x = (width / 2.0) - (self.width as f32 / (2.0 * self.dpi_factor))
+                    },
+                    None => {}
+                }
             }
-            TextPosition::RIGHT => x = width - self.width as f32,
+            Some(TextPosition::RIGHT) => match width {
+                Some(width) => {
+                    x = width - self.width as f32;
+                },
+                None => {}
+            },
             _ => {}
         }
 
