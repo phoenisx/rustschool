@@ -11,10 +11,10 @@ use ggez::input::keyboard;
 
 use std::{env, path};
 
-mod push;
-mod player;
-mod ball;
-mod custom_text;
+pub mod push;
+pub mod player;
+pub mod ball;
+pub mod custom_text;
 
 use player::{Player};
 use ball::{Ball};
@@ -116,6 +116,12 @@ impl EventHandler for GameState {
             match self.state {
                 GameStates::PLAY => {
                     self.ball.update(ctx, elapsed_time)?;
+                    if self.ball.collides(&self.player1) {
+                        self.ball.reflect_with_offset(5.0);
+                    }
+                    if self.ball.collides(&self.player2) {
+                        self.ball.reflect_with_offset(-4.0);
+                    }
                 },
                 _ => {}
             }

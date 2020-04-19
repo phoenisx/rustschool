@@ -46,6 +46,19 @@ impl Player {
         })
     }
 
+    pub fn get_left_edge(&self) -> f32 {
+        self.pos.x
+    }
+    pub fn get_right_edge(&self) -> f32 {
+        self.pos.x + self.bbox.w
+    }
+    pub fn get_bottom_edge(&self) -> f32 {
+        self.pos.y + self.bbox.h
+    }
+    pub fn get_top_edge(&self) -> f32 {
+        self.pos.y
+    }
+
     pub fn get_score_string(&self) -> String {
         self.score.to_string()
     }

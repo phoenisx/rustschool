@@ -1631,7 +1631,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pong-6"
+name = "pong_6"
 version = "0.1.0"
 dependencies = [
  "alga 0.9.3 (registry+https://github.com/rust-lang/crates.io-index)",
