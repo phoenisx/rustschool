@@ -1,11 +1,13 @@
 #![allow(dead_code, unused_imports)]
 
+/// Proper version of cs50 push.lua
 ///
 /// This lib will mimic the way CS50 `push` lib works.
 /// The purpose of this libe is to:
 /// 1. Allow to have a Canvas with Virtual Width/Height, which will act as render target
 ///    that can then be scaled to the Actual Window size to look like a retro game.
 ///
+
 use ggez::graphics::{self, Canvas, Color, FilterMode};
 use ggez::nalgebra::Vector2;
 use ggez::{conf, Context, GameResult};
