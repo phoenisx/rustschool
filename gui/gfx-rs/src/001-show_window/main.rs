@@ -99,8 +99,7 @@ fn main() {
     ev_loop.run(move |event, _, control_flow| {
         *control_flow = event_loop::ControlFlow::Wait;
         match event {
-            event::Event::WindowEvent { event, .. } =>
-            {
+            event::Event::WindowEvent { event, .. } => {
                 #[allow(unused_variables)]
                 match event {
                     event::WindowEvent::CloseRequested => {
@@ -121,7 +120,7 @@ fn main() {
             event::Event::MainEventsCleared => {
                 debug!("MainEventsCleared");
                 backend.window.request_redraw();
-            },
+            }
             event::Event::RedrawRequested(_) => {
                 debug!("RedrawRequested");
             }
