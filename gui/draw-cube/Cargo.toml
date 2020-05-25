@@ -39,6 +39,10 @@ name = "framebuffers"
 path = "src/007-framebuffers/main.rs"
 
 [[bin]]
+name = "synchronization"
+path = "src/008-synchronization/main.rs"
+
+[[bin]]
 name = "draw-cube"
 path = "src/final-draw-cube/main.rs"
 

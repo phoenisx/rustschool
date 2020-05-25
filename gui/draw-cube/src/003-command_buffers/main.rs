@@ -30,6 +30,10 @@ struct Renderer<B: Backend> {
     instance: B::Instance,
     // Vulkan backend surface object
     surface: ManuallyDrop<B::Surface>,
+     // Logical Device object
+    device: B::Device,
+    // CommandPool instance
+    command_pool: Option<B::CommandPool>,
 }
 
 impl<B: Backend> Renderer<B> {
@@ -90,6 +94,8 @@ impl<B: Backend> Renderer<B> {
         Renderer {
             instance,
             surface: ManuallyDrop::new(surface),
+            device,
+            command_pool: Some(command_pool),
         }
     }
 }
@@ -97,6 +103,7 @@ impl<B: Backend> Renderer<B> {
 impl<B: Backend> Drop for Renderer<B> {
     fn drop(&mut self) {
         unsafe {
+            self.device.destroy_command_pool(self.command_pool.take().unwrap());
             // up here ManuallyDrop gives us the inner resource with ownership
             // where `ptr::read` doesn't do anything just reads the resource
             // without manipulating the actual memory

@@ -47,6 +47,11 @@ pub struct Renderer<B: Backend> {
     render_pass: Option<B::RenderPass>,
     // Framebuffers linked to ImageViews
     framebuffers: Vec<B::Framebuffer>,
+    // Synchronization Primitives:
+    // Semaphores and Fences
+    image_available_semaphores: Vec<B::Semaphore>,
+    render_complete_semaphores: Vec<B::Semaphore>,
+    submission_complete_fence: Vec<B::Fence>,
 }
 
 impl<B: Backend> Renderer<B> {
@@ -190,6 +195,38 @@ impl<B: Backend> Renderer<B> {
             })
             .collect::<Result<Vec<B::Framebuffer>, &str>>()?;
 
+        let (
+            image_available_semaphores,
+            render_complete_semaphores,
+            submission_complete_fence
+        ) = {
+            let mut image_available_semaphores: Vec<B::Semaphore> = vec![];
+            let mut render_finished_semaphores: Vec<B::Semaphore> = vec![];
+            let mut submission_complete_fence: Vec<B::Fence> = vec![];
+            for _ in 0..image_views.len() {
+                image_available_semaphores.push(
+                    device
+                        .create_semaphore()
+                        .map_err(|_| "Could not create image_available_semaphores semaphore!")?,
+                );
+                render_finished_semaphores.push(
+                    device
+                        .create_semaphore()
+                        .map_err(|_| "Could not create render_finished_semaphores semaphore!")?,
+                );
+                submission_complete_fence.push(
+                    device
+                        .create_fence(true)
+                        .map_err(|_| "Could not create submission_complete_fence fence!")?,
+                );
+            }
+            (
+                image_available_semaphores,
+                render_finished_semaphores,
+                submission_complete_fence,
+            )
+        };
+
         Ok(
             Renderer {
                 instance,
@@ -200,6 +237,9 @@ impl<B: Backend> Renderer<B> {
                 image_views,
                 render_pass: Some(render_pass),
                 framebuffers,
+                image_available_semaphores,
+                render_complete_semaphores,
+                submission_complete_fence
             }
         )
     }
@@ -208,6 +248,15 @@ impl<B: Backend> Renderer<B> {
 impl<B: Backend> Drop for Renderer<B> {
     fn drop(&mut self) {
         unsafe {
+            for image_available in self.image_available_semaphores.drain(..) {
+                self.device.destroy_semaphore(image_available);
+            }
+            for render_complete in self.render_complete_semaphores.drain(..) {
+                self.device.destroy_semaphore(render_complete);
+            }
+            for submission_complete in self.submission_complete_fence.drain(..) {
+                self.device.destroy_fence(submission_complete);
+            }
             for framebuffer in self.framebuffers.drain(..) {
                 self.device.destroy_framebuffer(framebuffer);
             }
