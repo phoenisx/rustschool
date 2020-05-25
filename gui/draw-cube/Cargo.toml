@@ -31,6 +31,14 @@ name = "image_views"
 path = "src/005-image_views/main.rs"
 
 [[bin]]
+name = "render_pass_init"
+path = "src/006-render_pass_init/main.rs"
+
+[[bin]]
+name = "framebuffers"
+path = "src/007-framebuffers/main.rs"
+
+[[bin]]
 name = "draw-cube"
 path = "src/final-draw-cube/main.rs"
 
