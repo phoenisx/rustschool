@@ -20,22 +20,33 @@ use log4rs;
 const APP_NAME: &'static str = "Show Window";
 const WINDOW_SIZE: [u32; 2] = [1280, 768];
 
-struct BackendState<B: Backend> {
+struct Renderer<B: Backend> {
     // Vulkan backend instance object
-    instance: Option<B::Instance>,
+    instance: B::Instance,
     // Vulkan backend surface object
     surface: ManuallyDrop<B::Surface>,
-    // `winit` Window object.
-    window: window::Window,
 }
 
-impl<B: Backend> Drop for BackendState<B> {
+impl<B: Backend> Renderer<B> {
+    fn new(
+        instance: B::Instance,
+        surface: B::Surface
+    ) -> Self {
+        Renderer {
+            instance,
+            surface: ManuallyDrop::new(surface),
+        }
+    }
+}
+
+impl<B: Backend> Drop for Renderer<B> {
     fn drop(&mut self) {
-        if let Some(instance) = &self.instance {
-            unsafe {
-                let surface = ManuallyDrop::into_inner(ptr::read(&self.surface));
-                instance.destroy_surface(surface);
-            }
+        unsafe {
+            // up here ManuallyDrop gives us the inner resource with ownership
+            // where `ptr::read` doesn't do anything just reads the resource
+            // without manipulating the actual memory
+            let surface = ManuallyDrop::into_inner(ptr::read(&self.surface));
+            self.instance.destroy_surface(surface);
         }
     }
 }
@@ -44,7 +55,7 @@ fn create_backend(
     wb: window::WindowBuilder,
     ev_loop: &event_loop::EventLoop<()>,
     extent: hal_window::Extent2D,
-) -> BackendState<back::Backend> {
+) -> (back::Instance, back::Surface, window::Window) {
     let window = wb.build(ev_loop).unwrap();
 
     let instance = back::Instance::create(APP_NAME, 1).expect("Failed to create an instance!");
@@ -54,11 +65,11 @@ fn create_backend(
             .expect("Failed to create a surface!")
     };
 
-    BackendState {
-        instance: Some(instance),
-        surface: ManuallyDrop::new(surface),
-        window,
-    }
+    (
+        instance,
+        surface,
+        window
+    )
 }
 
 fn build_window(
@@ -94,7 +105,7 @@ fn main() {
     let ev_loop = event_loop::EventLoop::new();
     let (window_builder, extent) = build_window(&ev_loop);
     #[allow(unused_variables)]
-    let backend = create_backend(window_builder, &ev_loop, extent);
+    let (instance, surface, window) = create_backend(window_builder, &ev_loop, extent);
 
     ev_loop.run(move |event, _, control_flow| {
         *control_flow = event_loop::ControlFlow::Wait;
@@ -119,7 +130,7 @@ fn main() {
             }
             event::Event::MainEventsCleared => {
                 debug!("MainEventsCleared");
-                backend.window.request_redraw();
+                window.request_redraw();
             }
             event::Event::RedrawRequested(_) => {
                 debug!("RedrawRequested");

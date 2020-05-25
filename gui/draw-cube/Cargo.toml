@@ -27,6 +27,10 @@ name = "swap_chain"
 path = "src/004-swap_chain/main.rs"
 
 [[bin]]
+name = "image_views"
+path = "src/005-image_views/main.rs"
+
+[[bin]]
 name = "draw-cube"
 path = "src/final-draw-cube/main.rs"
 
