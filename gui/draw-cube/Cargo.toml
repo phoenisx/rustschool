@@ -43,6 +43,10 @@ name = "synchronization"
 path = "src/008-synchronization/main.rs"
 
 [[bin]]
+name = "color_background"
+path = "src/009-color_background/main.rs"
+
+[[bin]]
 name = "draw-cube"
 path = "src/final-draw-cube/main.rs"
 
