@@ -1,4 +1,5 @@
 use gfx_hal::{
+    adapter::{Adapter},
     prelude::*,
     pass::{ Attachment, AttachmentOps, SubpassDesc },
     pso::{PipelineStage},
@@ -33,10 +34,13 @@ const WINDOW_SIZE: [u32; 2] = [1280, 768];
 
 
 pub struct Renderer<B: Backend> {
+    window_dims: hal_window::Extent2D,
     // Vulkan backend instance object
     instance: B::Instance,
     // Vulkan backend surface object
     surface: ManuallyDrop<B::Surface>,
+    // Device Adpter, containing Physical and Queue details
+    adapter: Adapter<B>,
     // Logical Device object
     device: B::Device,
     // Queue Group for rendering reference
@@ -49,6 +53,8 @@ pub struct Renderer<B: Backend> {
     swapchain: ManuallyDrop<B::Swapchain>,
     // Collection Swapchain Image, Empty buffer initially
     backbuffer: Vec<B::Image>,
+    // Desired Format / Selected Format
+    format: hal_format::Format,
     // Image Extent
     image_extent: Extent,
     // Collection of ImageViews, capacity equals Swapchain image count
@@ -244,14 +250,17 @@ impl<B: Backend> Renderer<B> {
 
         Ok(
             Renderer {
+                window_dims: init_extent,
                 instance,
                 surface: ManuallyDrop::new(surface),
+                adapter,
                 device,
                 queue_group,
                 command_pool: ManuallyDrop::new(command_pool),
                 command_buffers,
                 swapchain: ManuallyDrop::new(swapchain),
                 backbuffer,
+                format,
                 image_extent,
                 image_views,
                 render_pass: ManuallyDrop::new(render_pass),
@@ -264,16 +273,45 @@ impl<B: Backend> Renderer<B> {
         )
     }
 
+    fn set_dims(&mut self, dims: PhysicalSize<u32>) {
+        self.window_dims = hal_window::Extent2D {
+            width: dims.width,
+            height: dims.height,
+        };
+    }
+
+    fn recreate_swapchain(&mut self) {
+        let caps = self.surface.capabilities(&self.adapter.physical_device);
+        let swap_config = hal_window::SwapchainConfig::from_caps(
+            &caps,
+            self.format,
+            self.window_dims
+        );
+        println!("SwapConfig Changed: {:?}", swap_config);
+        self.image_extent = swap_config.extent.to_extent();
+
+        unsafe {
+            self.surface
+                .configure_swapchain(&self.device, swap_config)
+                .expect("Can't create swapchain");
+        }
+    }
+
     fn draw(&mut self, color: [f32; 4]) -> Result<(), &'static str> {
         let image_available = &self.image_available_semaphores[self.current_frame];
         let render_finished = &self.render_complete_semaphores[self.current_frame];
         self.current_frame = (self.current_frame + 1) % self.backbuffer.len();
 
         let image_index = unsafe {
-            let (image_index, _) = self.swapchain
-                .acquire_image(core::u64::MAX, Some(image_available), None)
-                .map_err(|_| "Couldn't acquire an image from the swapchain!")?;
-            image_index as usize
+            let result = self.swapchain
+                .acquire_image(core::u64::MAX, Some(image_available), None);
+            match result {
+                Ok((image_index, _)) => image_index as usize,
+                Err(_) => {
+                    self.recreate_swapchain();
+                    return Ok(());
+                }
+            }
         };
 
         let submit_complete = &self.submission_complete_fence[image_index];
@@ -293,6 +331,7 @@ impl<B: Backend> Renderer<B> {
             let clear_values = [ClearValue {
                 color: ClearColor { float32: color }
             }];
+            debug!("COLOR:: {:#?}", clear_values);
             buffer.begin_primary(CommandBufferFlags::ONE_TIME_SUBMIT);
             buffer.begin_render_pass(
                 &*self.render_pass,
@@ -317,7 +356,7 @@ impl<B: Backend> Renderer<B> {
             signal_semaphores,
         };
 
-        unsafe {
+        let result = unsafe {
             self.queue_group
                 .queues[0]
                 .submit(submission, Some(submit_complete));
@@ -327,7 +366,11 @@ impl<B: Backend> Renderer<B> {
                     vec![(&*self.swapchain, image_index as u32)],
                     present_end_semaphores
                 )
-                .map_err(|_| "Failed to present into the swapchain!");
+                .map_err(|_| "Failed to present into the swapchain!")
+        };
+
+        if result.is_err() {
+            self.recreate_swapchain();
         }
 
         Ok(())
@@ -425,6 +468,10 @@ fn main() -> Result<(), &'static str> {
     let (instance, surface, window) = create_backend(window_builder, &ev_loop);
 
     let mut renderer = Renderer::<back::Backend>::new(instance, surface, extent)?;
+    let mut red = 1.0;
+    let mut green = 0.5;
+    let mut blue = 0.2;
+    let mut alpha = 1.0; // Alpha channel if set to 1.0 makes the color opaque...
 
     ev_loop.run(move |event, _, control_flow| {
         *control_flow = event_loop::ControlFlow::Wait;
@@ -435,28 +482,34 @@ fn main() -> Result<(), &'static str> {
                     event::WindowEvent::CloseRequested => {
                         *control_flow = event_loop::ControlFlow::Exit
                     }
+                    event::WindowEvent::CursorMoved { position, .. } => {
+                        red = position.x as f32/ extent.width as f32;
+                        green = position.y as f32 / extent.height as f32;
+                        blue = (red + green) * 0.3;
+                    },
                     event::WindowEvent::Resized(dims) => {
-                        debug!("RESIZE EVENT");
+                        // debug!("RESIZE EVENT");
+                        renderer.set_dims(dims);
+                        renderer.recreate_swapchain();
                     }
                     event::WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                         // Will get called whenever the screen scale factor (DPI) changes,
                         // like when user move the Window from one less DPI monitor
                         // to other high scaled DPI Monitor.
-                        debug!("Scale Factor Change");
+                        // debug!("Scale Factor Change");
                     }
                     _ => (),
                 }
             }
             event::Event::MainEventsCleared => {
-                debug!("MainEventsCleared");
-                // window.request_redraw();
+                // debug!("MainEventsCleared");
+                window.request_redraw();
             }
             event::Event::RedrawRequested(_) => {
-                debug!("RedrawRequested");
-                renderer.draw([0.8, 0.5, 0.5, 1.0]);
+                renderer.draw([red, green, blue, alpha]);
             }
             event::Event::RedrawEventsCleared => {
-                debug!("RedrawEventsCleared");
+                // debug!("RedrawEventsCleared");
             }
             _ => (),
         }
