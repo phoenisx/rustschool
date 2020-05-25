@@ -13,9 +13,11 @@ use gfx_hal::{
 
 use std::mem::ManuallyDrop;
 use std::ptr;
+use std::iter;
+use std::borrow::Borrow;
 
 use winit::{
-    dpi::{LogicalSize, PhysicalSize},
+    dpi::{LogicalSize, PhysicalSize, PhysicalPosition},
     event, event_loop, window,
 };
 
@@ -45,9 +47,10 @@ pub struct Renderer<B: Backend> {
     device: B::Device,
     // Queue Group for rendering reference
     queue_group: family::QueueGroup<B>,
-    // CommandPool instance
-    command_pool: ManuallyDrop<B::CommandPool>,
-    // CommandBuffers instance
+    // CommandPools collection. Each command pool have one primary buffer
+    // for now. I still don't get the actual use-case of command pools
+    command_pools: Vec<B::CommandPool>,
+    // CommandBuffers collection
     command_buffers: Vec<B::CommandBuffer>,
     // Swapchain instance
     swapchain: ManuallyDrop<B::Swapchain>,
@@ -61,8 +64,6 @@ pub struct Renderer<B: Backend> {
     image_views: Vec<B::ImageView>,
     // Render Pass instance
     render_pass: ManuallyDrop<B::RenderPass>,
-    // Framebuffers linked to ImageViews
-    framebuffers: Vec<B::Framebuffer>,
     // Synchronization Primitives:
     // Semaphores and Fences
     image_available_semaphores: Vec<B::Semaphore>,
@@ -186,34 +187,23 @@ impl<B: Backend> Renderer<B> {
             }
         };
 
-        let framebuffers = image_views.iter()
-            .map(|image_view| unsafe {
-                device
-                    .create_framebuffer(
-                        &render_pass,
-                        vec![image_view],
-                        image_extent
+        let (command_pools, mut command_buffers) = unsafe {
+            let mut command_pools: Vec<B::CommandPool> = Vec::with_capacity(backbuffer.len());
+            let mut command_buffers: Vec<B::CommandBuffer> = Vec::with_capacity(backbuffer.len());
+
+            for (index, _) in backbuffer.iter().enumerate() {
+                command_pools.push(device
+                    .create_command_pool(
+                        queue_group.family,
+                        CommandPoolCreateFlags::empty()
                     )
-                    .map_err(|_| "Couldn't create the framebuffer for the image_view!")
-            })
-            .collect::<Result<Vec<B::Framebuffer>, &str>>()?;
-
-        let (command_pool, mut command_buffers) = unsafe {
-            let mut command_pool = device
-                .create_command_pool(
-                    queue_group.family,
-                    CommandPoolCreateFlags::empty()
-                )
-                .expect("Out of memory");
-
-            let mut command_buffers: Vec<B::CommandBuffer> = vec![];
-            command_pool.allocate(
-                framebuffers.len(),
-                command::Level::Primary,
-                &mut command_buffers,
-            );
-
-            (command_pool, command_buffers)
+                    .expect("Out of memory")
+                );
+                command_buffers.push(command_pools[index].allocate_one(
+                    command::Level::Primary
+                ));
+            }
+            (command_pools, command_buffers)
         };
 
         let (
@@ -256,7 +246,7 @@ impl<B: Backend> Renderer<B> {
                 adapter,
                 device,
                 queue_group,
-                command_pool: ManuallyDrop::new(command_pool),
+                command_pools,
                 command_buffers,
                 swapchain: ManuallyDrop::new(swapchain),
                 backbuffer,
@@ -264,7 +254,6 @@ impl<B: Backend> Renderer<B> {
                 image_extent,
                 image_views,
                 render_pass: ManuallyDrop::new(render_pass),
-                framebuffers,
                 image_available_semaphores,
                 render_complete_semaphores,
                 submission_complete_fence,
@@ -298,15 +287,13 @@ impl<B: Backend> Renderer<B> {
     }
 
     fn draw(&mut self, color: [f32; 4]) -> Result<(), &'static str> {
-        let image_available = &self.image_available_semaphores[self.current_frame];
-        let render_finished = &self.render_complete_semaphores[self.current_frame];
-        self.current_frame = (self.current_frame + 1) % self.backbuffer.len();
+        let frame_index = self.current_frame % self.backbuffer.len();
 
-        let image_index = unsafe {
-            let result = self.swapchain
-                .acquire_image(core::u64::MAX, Some(image_available), None);
+        let surface_image = unsafe {
+            let result = self.surface
+                .acquire_image(core::u64::MAX);
             match result {
-                Ok((image_index, _)) => image_index as usize,
+                Ok((image, _)) => image,
                 Err(_) => {
                     self.recreate_swapchain();
                     return Ok(());
@@ -314,28 +301,43 @@ impl<B: Backend> Renderer<B> {
             }
         };
 
-        let submit_complete = &self.submission_complete_fence[image_index];
-        unsafe {
-            let render_timeout_ns = 1_000_000_000;
+        let framebuffer = unsafe {
             self.device
-                .wait_for_fence(submit_complete, render_timeout_ns)
+                .create_framebuffer(
+                    &self.render_pass,
+                    iter::once(surface_image.borrow()),
+                    Extent {
+                        width: self.window_dims.width,
+                        height: self.window_dims.height,
+                        depth: 1,
+                    },
+                )
+                .unwrap()
+        };
+
+        let image_available = &self.image_available_semaphores[frame_index];
+        let render_finished = &self.render_complete_semaphores[frame_index];
+        let submit_complete = &self.submission_complete_fence[frame_index];
+        unsafe {
+            self.device
+                .wait_for_fence(submit_complete, !0)
                 .expect("Out of memory or device lost");
 
             self.device
                 .reset_fence(submit_complete)
                 .expect("Out of memory");
+            self.command_pools[frame_index].reset(false);
         }
 
+        let buffer = &mut self.command_buffers[frame_index];
         unsafe {
-            let buffer = &mut self.command_buffers[image_index];
             let clear_values = [ClearValue {
                 color: ClearColor { float32: color }
             }];
-            debug!("COLOR:: {:#?}", clear_values);
             buffer.begin_primary(CommandBufferFlags::ONE_TIME_SUBMIT);
             buffer.begin_render_pass(
                 &*self.render_pass,
-                &self.framebuffers[image_index],
+                &framebuffer,
                 self.image_extent.rect(),
                 clear_values.iter(),
                 SubpassContents::Inline,
@@ -344,34 +346,37 @@ impl<B: Backend> Renderer<B> {
             buffer.finish();
         }
 
-        let command_buffers = &self.command_buffers[image_index..=image_index];
+        let command_buffers = iter::once(&buffer);
         let wait_semaphores =
-            vec![(image_available, PipelineStage::COLOR_ATTACHMENT_OUTPUT)];
-        let signal_semaphores = vec![render_finished];
-        let present_end_semaphores = vec![render_finished];
+            vec![(image_available, PipelineStage::BOTTOM_OF_PIPE)];
 
         let submission = Submission {
             command_buffers,
             wait_semaphores,
-            signal_semaphores,
+            signal_semaphores: iter::once(render_finished),
         };
 
-        let result = unsafe {
+        unsafe {
             self.queue_group
                 .queues[0]
                 .submit(submission, Some(submit_complete));
-            self.queue_group
+            let result = self.queue_group
                 .queues[0]
-                .present(
-                    vec![(&*self.swapchain, image_index as u32)],
-                    present_end_semaphores
+                .present_surface(
+                    &mut self.surface,
+                    surface_image,
+                    Some(render_finished)
                 )
-                .map_err(|_| "Failed to present into the swapchain!")
+                .map_err(|_| "Failed to present into the swapchain!");
+
+            self.device.destroy_framebuffer(framebuffer);
+
+            if result.is_err() {
+                self.recreate_swapchain();
+            }
         };
 
-        if result.is_err() {
-            self.recreate_swapchain();
-        }
+        self.current_frame += 1;
 
         Ok(())
     }
@@ -389,9 +394,6 @@ impl<B: Backend> Drop for Renderer<B> {
             for submission_complete in self.submission_complete_fence.drain(..) {
                 self.device.destroy_fence(submission_complete);
             }
-            for framebuffer in self.framebuffers.drain(..) {
-                self.device.destroy_framebuffer(framebuffer);
-            }
             for image_view in self.image_views.drain(..) {
                 self.device.destroy_image_view(image_view);
             }
@@ -401,9 +403,9 @@ impl<B: Backend> Drop for Renderer<B> {
             self.device.destroy_swapchain(ManuallyDrop::into_inner(
                 ptr::read(&self.swapchain)
             ));
-            self.device.destroy_command_pool(ManuallyDrop::into_inner(
-                ptr::read(&self.command_pool)
-            ));
+            for command_pool in self.command_pools.drain(..) {
+                self.device.destroy_command_pool(command_pool);
+            }
             // up here ManuallyDrop gives us the inner resource with ownership
             // where `ptr::read` doesn't do anything just reads the resource
             // without manipulating the actual memory
@@ -468,6 +470,7 @@ fn main() -> Result<(), &'static str> {
     let (instance, surface, window) = create_backend(window_builder, &ev_loop);
 
     let mut renderer = Renderer::<back::Backend>::new(instance, surface, extent)?;
+    let mut current_pos = PhysicalPosition::new(0.0, 0.0);
     let mut red = 1.0;
     let mut green = 0.5;
     let mut blue = 0.2;
@@ -483,9 +486,7 @@ fn main() -> Result<(), &'static str> {
                         *control_flow = event_loop::ControlFlow::Exit
                     }
                     event::WindowEvent::CursorMoved { position, .. } => {
-                        red = position.x as f32/ extent.width as f32;
-                        green = position.y as f32 / extent.height as f32;
-                        blue = (red + green) * 0.3;
+                        current_pos = position;
                     },
                     event::WindowEvent::Resized(dims) => {
                         // debug!("RESIZE EVENT");
@@ -503,9 +504,13 @@ fn main() -> Result<(), &'static str> {
             }
             event::Event::MainEventsCleared => {
                 // debug!("MainEventsCleared");
+                red = current_pos.x as f32/ extent.width as f32;
+                green = current_pos.y as f32 / extent.height as f32;
+                blue = (red + green) * 0.3;
                 window.request_redraw();
             }
             event::Event::RedrawRequested(_) => {
+                debug!("RedrawRequested");
                 renderer.draw([red, green, blue, alpha]);
             }
             event::Event::RedrawEventsCleared => {
