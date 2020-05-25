@@ -104,8 +104,9 @@ fn main() {
 
     let ev_loop = event_loop::EventLoop::new();
     let (window_builder, extent) = build_window(&ev_loop);
-    #[allow(unused_variables)]
     let (instance, surface, window) = create_backend(window_builder, &ev_loop, extent);
+
+    let renderer = Renderer::<back::Backend>::new(instance, surface);
 
     ev_loop.run(move |event, _, control_flow| {
         *control_flow = event_loop::ControlFlow::Wait;

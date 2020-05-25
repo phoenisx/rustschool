@@ -1,15 +1,12 @@
 use std::mem::ManuallyDrop;
 use std::ptr;
-use std::convert::From;
 
 use gfx_hal::{
-    adapter::{Adapter, MemoryType},
     prelude::*,
-    queue::family::QueueGroup,
-    window as hal_window, Backend, Features, Instance, Limits,
+    window as hal_window, Backend, Features, Instance,
 };
 use winit::{
-    dpi::{LogicalSize, PhysicalSize, Size},
+    dpi::{LogicalSize, PhysicalSize},
     event, event_loop, window,
 };
 
@@ -26,83 +23,68 @@ use log4rs;
 const APP_NAME: &'static str = "Show Window";
 const WINDOW_SIZE: [u32; 2] = [1280, 768];
 
-struct AdapterState<B: Backend> {
-    adapter: Option<Adapter<B>>,
-    memory_types: Vec<MemoryType>,
-    limits: Limits,
-}
-
-impl<B: Backend> AdapterState<B> {
-    fn new(adapters: &mut Vec<Adapter<B>>) -> Self {
-        // for (index, adapter) in adapters.iter().enumerate() {
-        //     debug!(
-        //         "Adapter[{}] Physical Device Limits: {:#?}",
-        //         index,
-        //         adapter.physical_device.memory_properties().memory_types
-        //     );
-        // }
-
-        // In my system, I have just one GPU Physical adapter, thus
-        // will only work with first instance.
-        let adapter = adapters.remove(0);
-
-        Self {
-            memory_types: adapter.physical_device.memory_properties().memory_types,
-            limits: adapter.physical_device.limits(),
-            adapter: Some(adapter),
-        }
-    }
-}
-
-struct DeviceState<B: Backend> {
-    device: B::Device,
-    queues: QueueGroup<B>,
-}
-
-impl<B: Backend> DeviceState<B> {
-    fn new(adapter: Adapter<B>, surface: &B::Surface) -> Self {
-        let supported_family = adapter
-            .queue_families
-            .iter()
-            .find(|family| {
-                surface.supports_queue_family(family) && family.queue_type().supports_graphics()
-            })
-            .unwrap();
-
-        let mut gpu = unsafe {
-            adapter
-                .physical_device
-                .open(&[(supported_family, &[1.0])], Features::empty())
-                .unwrap()
-        };
-
-        debug!(">>>>>>> Queue Family Type:: {:#?}", gpu.queue_groups.get(0).unwrap());
-
-        Self {
-            device: gpu.device,
-            queues: gpu.queue_groups.pop().unwrap(),
-        }
-    }
-}
-
-struct BackendState<B: Backend> {
+struct Renderer<B: Backend> {
     // Vulkan backend instance object
-    instance: Option<B::Instance>,
+    instance: B::Instance,
     // Vulkan backend surface object
     surface: ManuallyDrop<B::Surface>,
-    // Vulkan backend surface object
-    adapterState: AdapterState<B>,
-    // `winit` Window object.
-    window: window::Window,
 }
 
-impl<B: Backend> Drop for BackendState<B> {
+impl<B: Backend> Renderer<B> {
+    fn new(
+        instance: B::Instance,
+        surface: B::Surface
+    ) -> Self {
+        let mut adapters = instance.enumerate_adapters();
+        let (memory_types, limits, adapter) = {
+            let adapter = adapters.remove(0);
+            (
+                adapter.physical_device.memory_properties().memory_types,
+                adapter.physical_device.limits(),
+                adapter,
+            )
+        };
+
+        let (device, queues, supported_family) = {
+            let supported_family = adapter
+                .queue_families
+                .iter()
+                .find(|family| {
+                    surface.supports_queue_family(family) && family.queue_type().supports_graphics()
+                })
+                .unwrap();
+
+            let mut gpu = unsafe {
+                adapter
+                    .physical_device
+                    .open(&[(supported_family, &[1.0])], Features::empty())
+                    .unwrap()
+            };
+
+            debug!(">>>>>>> Queue Family Type:: {:#?}", gpu.queue_groups.get(0).unwrap());
+
+            (
+                gpu.device,
+                gpu.queue_groups.pop().unwrap(),
+                supported_family,
+            )
+        };
+
+        Renderer {
+            instance,
+            surface: ManuallyDrop::new(surface),
+        }
+    }
+}
+
+impl<B: Backend> Drop for Renderer<B> {
     fn drop(&mut self) {
-        if let Some(instance) = &self.instance {
-            unsafe {
-                let surface = ManuallyDrop::into_inner(ptr::read(&self.surface));
-                instance.destroy_surface(surface);
-            }
+        unsafe {
+            // up here ManuallyDrop gives us the inner resource with ownership
+            // where `ptr::read` doesn't do anything just reads the resource
+            // without manipulating the actual memory
+            let surface = ManuallyDrop::into_inner(ptr::read(&self.surface));
+            self.instance.destroy_surface(surface);
         }
     }
 }
@@ -111,7 +93,7 @@ fn create_backend(
     wb: window::WindowBuilder,
     ev_loop: &event_loop::EventLoop<()>,
     extent: hal_window::Extent2D,
-) -> BackendState<back::Backend> {
+) -> (back::Instance, back::Surface, window::Window) {
     let window = wb.build(ev_loop).unwrap();
 
     let instance = back::Instance::create(APP_NAME, 1).expect("Failed to create an instance!");
@@ -121,14 +103,11 @@ fn create_backend(
             .expect("Failed to create a surface!")
     };
 
-    let mut adapters = instance.enumerate_adapters();
-
-    BackendState {
-        instance: Some(instance),
-        surface: ManuallyDrop::new(surface),
-        adapterState: AdapterState::new(&mut adapters),
-        window,
-    }
+    (
+        instance,
+        surface,
+        window
+    )
 }
 
 fn build_window(
@@ -163,13 +142,9 @@ fn main() {
 
     let ev_loop = event_loop::EventLoop::new();
     let (window_builder, extent) = build_window(&ev_loop);
-    #[allow(unused_variables)]
-    let mut backend = create_backend(window_builder, &ev_loop, extent);
+    let (instance, surface, window) = create_backend(window_builder, &ev_loop, extent);
 
-    let deviceState = DeviceState::new(
-        backend.adapterState.adapter.take().unwrap(),
-        &backend.surface
-    );
+    let renderer = Renderer::<back::Backend>::new(instance, surface);
 
     ev_loop.run(move |event, _, control_flow| {
         *control_flow = event_loop::ControlFlow::Wait;
@@ -193,14 +168,14 @@ fn main() {
                 }
             }
             event::Event::MainEventsCleared => {
-                // debug!("MainEventsCleared");
-                backend.window.request_redraw();
+                debug!("MainEventsCleared");
+                // window.request_redraw();
             }
             event::Event::RedrawRequested(_) => {
-                // debug!("RedrawRequested");
+                debug!("RedrawRequested");
             }
             event::Event::RedrawEventsCleared => {
-                // debug!("RedrawEventsCleared");
+                debug!("RedrawEventsCleared");
             }
             _ => (),
         }
