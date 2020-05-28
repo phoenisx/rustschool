@@ -1,10 +1,7 @@
 use std::mem::ManuallyDrop;
 use std::ptr;
 
-use gfx_hal::{
-    prelude::*,
-    window as hal_window, Backend, Features, Instance,
-};
+use gfx_hal::{prelude::*, window as hal_window, Backend, Features, Instance};
 use winit::{
     dpi::{LogicalSize, PhysicalSize},
     event, event_loop, window,
@@ -31,10 +28,7 @@ struct Renderer<B: Backend> {
 }
 
 impl<B: Backend> Renderer<B> {
-    fn new(
-        instance: B::Instance,
-        surface: B::Surface
-    ) -> Self {
+    fn new(instance: B::Instance, surface: B::Surface) -> Self {
         let mut adapters = instance.enumerate_adapters();
         let (memory_types, limits, adapter) = {
             let adapter = adapters.remove(0);
@@ -61,7 +55,10 @@ impl<B: Backend> Renderer<B> {
                     .unwrap()
             };
 
-            debug!(">>>>>>> Queue Family Type:: {:#?}", gpu.queue_groups.get(0).unwrap());
+            debug!(
+                ">>>>>>> Queue Family Type:: {:#?}",
+                gpu.queue_groups.get(0).unwrap()
+            );
 
             (
                 gpu.device,
@@ -103,11 +100,7 @@ fn create_backend(
             .expect("Failed to create a surface!")
     };
 
-    (
-        instance,
-        surface,
-        window
-    )
+    (instance, surface, window)
 }
 
 fn build_window(

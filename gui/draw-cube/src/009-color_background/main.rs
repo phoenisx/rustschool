@@ -1,23 +1,23 @@
 use gfx_hal::{
-    adapter::{Adapter},
+    adapter::Adapter,
+    command::{self, ClearColor, ClearValue, CommandBufferFlags, SubpassContents},
+    format::{self as hal_format, Aspects, Swizzle},
+    image::{Extent, Layout, SubresourceRange, ViewKind},
+    pass::{Attachment, AttachmentOps, SubpassDesc},
+    pool::CommandPoolCreateFlags,
     prelude::*,
-    pass::{ Attachment, AttachmentOps, SubpassDesc },
-    pso::{PipelineStage},
-    command::{self, ClearValue, ClearColor, CommandBufferFlags, SubpassContents},
+    pso::{PipelineStage, Rect, Viewport},
     queue::{family, Submission},
-    pool::{CommandPoolCreateFlags},
-    format::{self as hal_format, Swizzle, Aspects},
-    image::{Extent, ViewKind, SubresourceRange, Layout},
     window as hal_window, Backend, Features, Instance,
 };
 
+use std::borrow::Borrow;
+use std::iter;
 use std::mem::ManuallyDrop;
 use std::ptr;
-use std::iter;
-use std::borrow::Borrow;
 
 use winit::{
-    dpi::{LogicalSize, PhysicalSize, PhysicalPosition},
+    dpi::{LogicalSize, PhysicalPosition, PhysicalSize},
     event, event_loop, window,
 };
 
@@ -34,9 +34,9 @@ use log4rs;
 const APP_NAME: &'static str = "Show Window";
 const WINDOW_SIZE: [u32; 2] = [1280, 768];
 
-
 pub struct Renderer<B: Backend> {
     window_dims: hal_window::Extent2D,
+    viewport: Viewport,
     // Vulkan backend instance object
     instance: B::Instance,
     // Vulkan backend surface object
@@ -53,15 +53,15 @@ pub struct Renderer<B: Backend> {
     // CommandBuffers collection
     command_buffers: Vec<B::CommandBuffer>,
     // Swapchain instance
-    swapchain: ManuallyDrop<B::Swapchain>,
+    // swapchain: ManuallyDrop<B::Swapchain>,
     // Collection Swapchain Image, Empty buffer initially
-    backbuffer: Vec<B::Image>,
+    backbuffer_size: usize,
     // Desired Format / Selected Format
     format: hal_format::Format,
     // Image Extent
     image_extent: Extent,
     // Collection of ImageViews, capacity equals Swapchain image count
-    image_views: Vec<B::ImageView>,
+    // image_views: Vec<B::ImageView>,
     // Render Pass instance
     render_pass: ManuallyDrop<B::RenderPass>,
     // Synchronization Primitives:
@@ -113,12 +113,10 @@ impl<B: Backend> Renderer<B> {
         };
 
         // Get Surface Capabilities
-        let (swapchain, backbuffer, image_extent, format) = {
-            let caps = surface
-                .capabilities(&adapter.physical_device);
+        let (backbuffer_size, image_extent, format) = {
+            let caps = surface.capabilities(&adapter.physical_device);
 
-            let supported_formats = surface
-                .supported_formats(&adapter.physical_device);
+            let supported_formats = surface.supported_formats(&adapter.physical_device);
             // We need a supported format for the OS Window, so that Images drawn on
             // Swapchain are of that same format.
             let format = supported_formats.map_or(hal_format::Format::Rgba8Srgb, |formats| {
@@ -131,37 +129,38 @@ impl<B: Backend> Renderer<B> {
 
             let swap_config = hal_window::SwapchainConfig::from_caps(&caps, format, init_extent);
             let image_extent = swap_config.extent.to_extent();
-            let (swapchain, backbuffer) = unsafe {
-                device
-                    .create_swapchain(&mut surface, swap_config, None)
-                    .expect("Can't create swapchain")
+            // let (swapchain, backbuffer) = unsafe {
+            //     device
+            //         .create_swapchain(&mut surface, swap_config, None)
+            //         .expect("Can't create swapchain")
+            // };
+
+            unsafe {
+                surface
+                    .configure_swapchain(&device, swap_config)
+                    .expect("Can't configure swapchain");
             };
 
-            (
-                swapchain,
-                backbuffer,
-                image_extent,
-                format
-            )
+            (3, image_extent, format)
         };
 
-        let image_views = backbuffer.iter()
-            .map(|image| unsafe {
-                device
-                    .create_image_view(
-                        &image,
-                        ViewKind::D2,
-                        format,
-                        Swizzle::NO,
-                        SubresourceRange {
-                            aspects: Aspects::COLOR,
-                            levels: 0..1,
-                            layers: 0..1,
-                        },
-                    )
-                    .map_err(|_| "Couldn't create the image_view for the image!")
-            })
-            .collect::<Result<Vec<B::ImageView>, &str>>()?;
+        // let image_views = backbuffer.iter()
+        //     .map(|image| unsafe {
+        //         device
+        //             .create_image_view(
+        //                 &image,
+        //                 ViewKind::D2,
+        //                 format,
+        //                 Swizzle::NO,
+        //                 SubresourceRange {
+        //                     aspects: Aspects::COLOR,
+        //                     levels: 0..1,
+        //                     layers: 0..1,
+        //                 },
+        //             )
+        //             .map_err(|_| "Couldn't create the image_view for the image!")
+        //     })
+        //     .collect::<Result<Vec<B::ImageView>, &str>>()?;
 
         let render_pass = {
             let color_attachment = Attachment {
@@ -181,40 +180,32 @@ impl<B: Backend> Renderer<B> {
             };
 
             unsafe {
-               device
+                device
                     .create_render_pass(&[color_attachment], &[subpass], &[])
                     .expect("Out of memory")
             }
         };
 
         let (command_pools, mut command_buffers) = unsafe {
-            let mut command_pools: Vec<B::CommandPool> = Vec::with_capacity(backbuffer.len());
-            let mut command_buffers: Vec<B::CommandBuffer> = Vec::with_capacity(backbuffer.len());
+            let mut command_pools: Vec<B::CommandPool> = Vec::with_capacity(backbuffer_size);
+            let mut command_buffers: Vec<B::CommandBuffer> = Vec::with_capacity(backbuffer_size);
 
-            for (index, _) in backbuffer.iter().enumerate() {
-                command_pools.push(device
-                    .create_command_pool(
-                        queue_group.family,
-                        CommandPoolCreateFlags::empty()
-                    )
-                    .expect("Out of memory")
+            for index in 0..backbuffer_size {
+                command_pools.push(
+                    device
+                        .create_command_pool(queue_group.family, CommandPoolCreateFlags::empty())
+                        .expect("Out of memory"),
                 );
-                command_buffers.push(command_pools[index].allocate_one(
-                    command::Level::Primary
-                ));
+                command_buffers.push(command_pools[index].allocate_one(command::Level::Primary));
             }
             (command_pools, command_buffers)
         };
 
-        let (
-            image_available_semaphores,
-            render_complete_semaphores,
-            submission_complete_fence
-        ) = {
+        let (image_available_semaphores, render_complete_semaphores, submission_complete_fence) = {
             let mut image_available_semaphores: Vec<B::Semaphore> = vec![];
             let mut render_finished_semaphores: Vec<B::Semaphore> = vec![];
             let mut submission_complete_fence: Vec<B::Fence> = vec![];
-            for _ in 0..image_views.len() {
+            for _ in 0..backbuffer_size {
                 image_available_semaphores.push(
                     device
                         .create_semaphore()
@@ -238,28 +229,36 @@ impl<B: Backend> Renderer<B> {
             )
         };
 
-        Ok(
-            Renderer {
-                window_dims: init_extent,
-                instance,
-                surface: ManuallyDrop::new(surface),
-                adapter,
-                device,
-                queue_group,
-                command_pools,
-                command_buffers,
-                swapchain: ManuallyDrop::new(swapchain),
-                backbuffer,
-                format,
-                image_extent,
-                image_views,
-                render_pass: ManuallyDrop::new(render_pass),
-                image_available_semaphores,
-                render_complete_semaphores,
-                submission_complete_fence,
-                current_frame: 0,
-            }
-        )
+        let viewport = Viewport {
+            rect: Rect {
+                x: 0,
+                y: 0,
+                w: init_extent.width as _,
+                h: init_extent.height as _,
+            },
+            depth: 0.0..1.0,
+        };
+
+        Ok(Renderer {
+            window_dims: init_extent,
+            viewport,
+            instance,
+            surface: ManuallyDrop::new(surface),
+            adapter,
+            device,
+            queue_group,
+            command_pools,
+            command_buffers,
+            backbuffer_size,
+            format,
+            image_extent,
+            // image_views,
+            render_pass: ManuallyDrop::new(render_pass),
+            image_available_semaphores,
+            render_complete_semaphores,
+            submission_complete_fence,
+            current_frame: 0,
+        })
     }
 
     fn set_dims(&mut self, dims: PhysicalSize<u32>) {
@@ -271,11 +270,8 @@ impl<B: Backend> Renderer<B> {
 
     fn recreate_swapchain(&mut self) {
         let caps = self.surface.capabilities(&self.adapter.physical_device);
-        let swap_config = hal_window::SwapchainConfig::from_caps(
-            &caps,
-            self.format,
-            self.window_dims
-        );
+        let swap_config =
+            hal_window::SwapchainConfig::from_caps(&caps, self.format, self.window_dims);
         println!("SwapConfig Changed: {:?}", swap_config);
         self.image_extent = swap_config.extent.to_extent();
 
@@ -284,14 +280,16 @@ impl<B: Backend> Renderer<B> {
                 .configure_swapchain(&self.device, swap_config)
                 .expect("Can't create swapchain");
         }
+
+        self.viewport.rect.w = self.image_extent.width as _;
+        self.viewport.rect.h = self.image_extent.height as _;
     }
 
     fn draw(&mut self, color: [f32; 4]) -> Result<(), &'static str> {
-        let frame_index = self.current_frame % self.backbuffer.len();
+        let frame_index = self.current_frame % self.backbuffer_size;
 
         let surface_image = unsafe {
-            let result = self.surface
-                .acquire_image(core::u64::MAX);
+            let result = self.surface.acquire_image(core::u64::MAX);
             match result {
                 Ok((image, _)) => image,
                 Err(_) => {
@@ -332,13 +330,15 @@ impl<B: Backend> Renderer<B> {
         let buffer = &mut self.command_buffers[frame_index];
         unsafe {
             let clear_values = [ClearValue {
-                color: ClearColor { float32: color }
+                color: ClearColor { float32: color },
             }];
             buffer.begin_primary(CommandBufferFlags::ONE_TIME_SUBMIT);
+            buffer.set_viewports(0, &[self.viewport.clone()]);
+            buffer.set_scissors(0, &[self.viewport.rect]);
             buffer.begin_render_pass(
-                &*self.render_pass,
+                &self.render_pass,
                 &framebuffer,
-                self.image_extent.rect(),
+                self.viewport.rect,
                 clear_values.iter(),
                 SubpassContents::Inline,
             );
@@ -346,27 +346,19 @@ impl<B: Backend> Renderer<B> {
             buffer.finish();
         }
 
-        let command_buffers = iter::once(&buffer);
-        let wait_semaphores =
-            vec![(image_available, PipelineStage::BOTTOM_OF_PIPE)];
+        let command_buffers = iter::once(&*buffer);
+        let wait_semaphores = vec![(image_available, PipelineStage::BOTTOM_OF_PIPE)];
 
         let submission = Submission {
             command_buffers,
-            wait_semaphores,
+            wait_semaphores: None,
             signal_semaphores: iter::once(render_finished),
         };
 
         unsafe {
-            self.queue_group
-                .queues[0]
-                .submit(submission, Some(submit_complete));
-            let result = self.queue_group
-                .queues[0]
-                .present_surface(
-                    &mut self.surface,
-                    surface_image,
-                    Some(render_finished)
-                )
+            self.queue_group.queues[0].submit(submission, Some(submit_complete));
+            let result = self.queue_group.queues[0]
+                .present_surface(&mut self.surface, surface_image, Some(render_finished))
                 .map_err(|_| "Failed to present into the swapchain!");
 
             self.device.destroy_framebuffer(framebuffer);
@@ -394,15 +386,15 @@ impl<B: Backend> Drop for Renderer<B> {
             for submission_complete in self.submission_complete_fence.drain(..) {
                 self.device.destroy_fence(submission_complete);
             }
-            for image_view in self.image_views.drain(..) {
-                self.device.destroy_image_view(image_view);
-            }
-            self.device.destroy_render_pass(ManuallyDrop::into_inner(
-                ptr::read(&self.render_pass)
-            ));
-            self.device.destroy_swapchain(ManuallyDrop::into_inner(
-                ptr::read(&self.swapchain)
-            ));
+            // for image_view in self.image_views.drain(..) {
+            //     self.device.destroy_image_view(image_view);
+            // }
+            self.device
+                .destroy_render_pass(ManuallyDrop::into_inner(ptr::read(&self.render_pass)));
+            // self.device.destroy_swapchain(ManuallyDrop::into_inner(
+            //     ptr::read(&self.swapchain)
+            // ));
+            self.surface.unconfigure_swapchain(&self.device);
             for command_pool in self.command_pools.drain(..) {
                 self.device.destroy_command_pool(command_pool);
             }
@@ -428,11 +420,7 @@ fn create_backend(
             .expect("Failed to create a surface!")
     };
 
-    (
-        instance,
-        surface,
-        window
-    )
+    (instance, surface, window)
 }
 
 fn build_window(
@@ -476,6 +464,8 @@ fn main() -> Result<(), &'static str> {
     let mut blue = 0.2;
     let mut alpha = 1.0; // Alpha channel if set to 1.0 makes the color opaque...
 
+    renderer.draw([red, green, blue, alpha]);
+
     ev_loop.run(move |event, _, control_flow| {
         *control_flow = event_loop::ControlFlow::Wait;
         match event {
@@ -487,7 +477,7 @@ fn main() -> Result<(), &'static str> {
                     }
                     event::WindowEvent::CursorMoved { position, .. } => {
                         current_pos = position;
-                    },
+                    }
                     event::WindowEvent::Resized(dims) => {
                         // debug!("RESIZE EVENT");
                         renderer.set_dims(dims);
@@ -504,17 +494,17 @@ fn main() -> Result<(), &'static str> {
             }
             event::Event::MainEventsCleared => {
                 // debug!("MainEventsCleared");
-                red = current_pos.x as f32/ extent.width as f32;
+                red = current_pos.x as f32 / extent.width as f32;
                 green = current_pos.y as f32 / extent.height as f32;
                 blue = (red + green) * 0.3;
-                window.request_redraw();
+                // window.request_redraw();
             }
             event::Event::RedrawRequested(_) => {
-                debug!("RedrawRequested");
-                renderer.draw([red, green, blue, alpha]);
+                // debug!("RedrawRequested");
             }
             event::Event::RedrawEventsCleared => {
-                // debug!("RedrawEventsCleared");
+                debug!("RedrawEventsCleared");
+                renderer.draw([red, green, blue, alpha]);
             }
             _ => (),
         }

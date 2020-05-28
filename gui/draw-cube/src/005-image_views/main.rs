@@ -1,9 +1,9 @@
 use gfx_hal::{
-    prelude::*,
     command,
-    pool::{CommandPoolCreateFlags},
-    format::{self as hal_format, Swizzle, Aspects},
-    image::{ViewKind, SubresourceRange, ViewCreationError},
+    format::{self as hal_format, Aspects, Swizzle},
+    image::{SubresourceRange, ViewCreationError, ViewKind},
+    pool::CommandPoolCreateFlags,
+    prelude::*,
     window as hal_window, Backend, Features, Instance,
 };
 
@@ -27,7 +27,6 @@ use log4rs;
 
 const APP_NAME: &'static str = "Show Window";
 const WINDOW_SIZE: [u32; 2] = [1280, 768];
-
 
 pub struct Renderer<B: Backend> {
     // Vulkan backend instance object
@@ -83,26 +82,19 @@ impl<B: Backend> Renderer<B> {
 
         let (command_pool, mut command_buffer) = unsafe {
             let mut command_pool = device
-                .create_command_pool(
-                    queues.family,
-                    CommandPoolCreateFlags::empty()
-                )
+                .create_command_pool(queues.family, CommandPoolCreateFlags::empty())
                 .expect("Out of memory");
 
-            let command_buffer = command_pool.allocate_one(
-                command::Level::Primary
-            );
+            let command_buffer = command_pool.allocate_one(command::Level::Primary);
 
             (command_pool, command_buffer)
         };
 
         // Get Surface Capabilities
         let (swapchain, backbuffer, extent, format) = {
-            let caps = surface
-                .capabilities(&adapter.physical_device);
+            let caps = surface.capabilities(&adapter.physical_device);
 
-            let supported_formats = surface
-                .supported_formats(&adapter.physical_device);
+            let supported_formats = surface.supported_formats(&adapter.physical_device);
             // We need a supported format for the OS Window, so that Images drawn on
             // Swapchain are of that same format.
             let format = supported_formats.map_or(hal_format::Format::Rgba8Srgb, |formats| {
@@ -121,15 +113,11 @@ impl<B: Backend> Renderer<B> {
                     .expect("Can't create swapchain")
             };
 
-            (
-                swapchain,
-                backbuffer,
-                extent,
-                format
-            )
+            (swapchain, backbuffer, extent, format)
         };
 
-        let image_views = backbuffer.into_iter()
+        let image_views = backbuffer
+            .into_iter()
             .map(|image| unsafe {
                 device
                     .create_image_view(
@@ -149,15 +137,13 @@ impl<B: Backend> Renderer<B> {
 
         debug!("Image Views[0]:: {:#?}", image_views[0]);
 
-        Ok(
-            Renderer {
-                instance,
-                surface: ManuallyDrop::new(surface),
-                device,
-                swapchain: Some(swapchain),
-                image_views,
-            }
-        )
+        Ok(Renderer {
+            instance,
+            surface: ManuallyDrop::new(surface),
+            device,
+            swapchain: Some(swapchain),
+            image_views,
+        })
     }
 }
 
@@ -167,7 +153,8 @@ impl<B: Backend> Drop for Renderer<B> {
             for image_view in self.image_views.drain(..) {
                 self.device.destroy_image_view(image_view);
             }
-            self.device.destroy_swapchain(self.swapchain.take().unwrap());
+            self.device
+                .destroy_swapchain(self.swapchain.take().unwrap());
             // up here ManuallyDrop gives us the inner resource with ownership
             // where `ptr::read` doesn't do anything just reads the resource
             // without manipulating the actual memory
@@ -190,11 +177,7 @@ fn create_backend(
             .expect("Failed to create a surface!")
     };
 
-    (
-        instance,
-        surface,
-        window
-    )
+    (instance, surface, window)
 }
 
 fn build_window(

@@ -2,10 +2,10 @@ use std::mem::ManuallyDrop;
 use std::ptr;
 
 use gfx_hal::{
-    prelude::*,
     command,
-    pool::{CommandPoolCreateFlags},
     format::{self as hal_format},
+    pool::CommandPoolCreateFlags,
+    prelude::*,
     window as hal_window, Backend, Features, Instance,
 };
 use winit::{
@@ -78,26 +78,19 @@ impl<B: Backend> Renderer<B> {
 
         let (command_pool, mut command_buffer) = unsafe {
             let mut command_pool = device
-                .create_command_pool(
-                    queues.family,
-                    CommandPoolCreateFlags::empty()
-                )
+                .create_command_pool(queues.family, CommandPoolCreateFlags::empty())
                 .expect("Out of memory");
 
-            let command_buffer = command_pool.allocate_one(
-                command::Level::Primary
-            );
+            let command_buffer = command_pool.allocate_one(command::Level::Primary);
 
             (command_pool, command_buffer)
         };
 
         // Get Surface Capabilities
         let (swapchain, backbuffer, extent, format) = {
-            let caps = surface
-                .capabilities(&adapter.physical_device);
+            let caps = surface.capabilities(&adapter.physical_device);
 
-            let supported_formats = surface
-                .supported_formats(&adapter.physical_device);
+            let supported_formats = surface.supported_formats(&adapter.physical_device);
             // We need a supported format for the OS Window, so that Images drawn on
             // Swapchain are of that same format.
             let format = supported_formats.map_or(hal_format::Format::Rgba8Srgb, |formats| {
@@ -118,12 +111,7 @@ impl<B: Backend> Renderer<B> {
                     .expect("Can't create swapchain")
             };
 
-            (
-                swapchain,
-                backbuffer,
-                extent,
-                format
-            )
+            (swapchain, backbuffer, extent, format)
         };
 
         Renderer {
@@ -143,7 +131,8 @@ impl<B: Backend> Drop for Renderer<B> {
             // without manipulating the actual memory
             let surface = ManuallyDrop::into_inner(ptr::read(&self.surface));
             self.instance.destroy_surface(surface);
-            self.device.destroy_swapchain(self.swapchain.take().unwrap());
+            self.device
+                .destroy_swapchain(self.swapchain.take().unwrap());
         }
     }
 }
@@ -161,11 +150,7 @@ fn create_backend(
             .expect("Failed to create a surface!")
     };
 
-    (
-        instance,
-        surface,
-        window
-    )
+    (instance, surface, window)
 }
 
 fn build_window(

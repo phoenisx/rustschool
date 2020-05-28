@@ -28,10 +28,7 @@ struct Renderer<B: Backend> {
 }
 
 impl<B: Backend> Renderer<B> {
-    fn new(
-        instance: B::Instance,
-        surface: B::Surface
-    ) -> Self {
+    fn new(instance: B::Instance, surface: B::Surface) -> Self {
         Renderer {
             instance,
             surface: ManuallyDrop::new(surface),
@@ -65,11 +62,7 @@ fn create_backend(
             .expect("Failed to create a surface!")
     };
 
-    (
-        instance,
-        surface,
-        window
-    )
+    (instance, surface, window)
 }
 
 fn build_window(

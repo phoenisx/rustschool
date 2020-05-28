@@ -2,10 +2,8 @@ use std::mem::ManuallyDrop;
 use std::ptr;
 
 use gfx_hal::{
-    prelude::*,
-    command,
-    pool::{CommandPoolCreateFlags},
-    window as hal_window, Backend, Features, Instance,
+    command, pool::CommandPoolCreateFlags, prelude::*, window as hal_window, Backend, Features,
+    Instance,
 };
 use winit::{
     dpi::{LogicalSize, PhysicalSize},
@@ -30,17 +28,14 @@ struct Renderer<B: Backend> {
     instance: B::Instance,
     // Vulkan backend surface object
     surface: ManuallyDrop<B::Surface>,
-     // Logical Device object
+    // Logical Device object
     device: B::Device,
     // CommandPool instance
     command_pool: Option<B::CommandPool>,
 }
 
 impl<B: Backend> Renderer<B> {
-    fn new(
-        instance: B::Instance,
-        surface: B::Surface
-    ) -> Self {
+    fn new(instance: B::Instance, surface: B::Surface) -> Self {
         let mut adapters = instance.enumerate_adapters();
         let (memory_types, limits, adapter) = {
             let adapter = adapters.remove(0);
@@ -76,15 +71,10 @@ impl<B: Backend> Renderer<B> {
 
         let (command_pool, mut command_buffer) = unsafe {
             let mut command_pool = device
-                .create_command_pool(
-                    queues.family,
-                    CommandPoolCreateFlags::empty()
-                )
+                .create_command_pool(queues.family, CommandPoolCreateFlags::empty())
                 .expect("Out of memory");
 
-            let command_buffer = command_pool.allocate_one(
-                command::Level::Primary
-            );
+            let command_buffer = command_pool.allocate_one(command::Level::Primary);
 
             debug!(">>>>>>> Comand Buffer:: {:#?}", command_buffer);
 
@@ -103,7 +93,8 @@ impl<B: Backend> Renderer<B> {
 impl<B: Backend> Drop for Renderer<B> {
     fn drop(&mut self) {
         unsafe {
-            self.device.destroy_command_pool(self.command_pool.take().unwrap());
+            self.device
+                .destroy_command_pool(self.command_pool.take().unwrap());
             // up here ManuallyDrop gives us the inner resource with ownership
             // where `ptr::read` doesn't do anything just reads the resource
             // without manipulating the actual memory
@@ -127,11 +118,7 @@ fn create_backend(
             .expect("Failed to create a surface!")
     };
 
-    (
-        instance,
-        surface,
-        window
-    )
+    (instance, surface, window)
 }
 
 fn build_window(

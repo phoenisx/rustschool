@@ -1,10 +1,10 @@
 use gfx_hal::{
-    prelude::*,
-    pass::{ Attachment, AttachmentOps, SubpassDesc },
     command,
-    pool::{CommandPoolCreateFlags},
-    format::{self as hal_format, Swizzle, Aspects},
-    image::{ViewKind, SubresourceRange, Layout},
+    format::{self as hal_format, Aspects, Swizzle},
+    image::{Layout, SubresourceRange, ViewKind},
+    pass::{Attachment, AttachmentOps, SubpassDesc},
+    pool::CommandPoolCreateFlags,
+    prelude::*,
     window as hal_window, Backend, Features, Instance,
 };
 
@@ -28,7 +28,6 @@ use log4rs;
 
 const APP_NAME: &'static str = "Show Window";
 const WINDOW_SIZE: [u32; 2] = [1280, 768];
-
 
 pub struct Renderer<B: Backend> {
     // Vulkan backend instance object
@@ -95,26 +94,19 @@ impl<B: Backend> Renderer<B> {
 
         let (command_pool, mut command_buffer) = unsafe {
             let mut command_pool = device
-                .create_command_pool(
-                    queues.family,
-                    CommandPoolCreateFlags::empty()
-                )
+                .create_command_pool(queues.family, CommandPoolCreateFlags::empty())
                 .expect("Out of memory");
 
-            let command_buffer = command_pool.allocate_one(
-                command::Level::Primary
-            );
+            let command_buffer = command_pool.allocate_one(command::Level::Primary);
 
             (command_pool, command_buffer)
         };
 
         // Get Surface Capabilities
         let (swapchain, backbuffer, image_extent, format) = {
-            let caps = surface
-                .capabilities(&adapter.physical_device);
+            let caps = surface.capabilities(&adapter.physical_device);
 
-            let supported_formats = surface
-                .supported_formats(&adapter.physical_device);
+            let supported_formats = surface.supported_formats(&adapter.physical_device);
             // We need a supported format for the OS Window, so that Images drawn on
             // Swapchain are of that same format.
             let format = supported_formats.map_or(hal_format::Format::Rgba8Srgb, |formats| {
@@ -133,15 +125,11 @@ impl<B: Backend> Renderer<B> {
                     .expect("Can't create swapchain")
             };
 
-            (
-                swapchain,
-                backbuffer,
-                image_extent,
-                format
-            )
+            (swapchain, backbuffer, image_extent, format)
         };
 
-        let image_views = backbuffer.into_iter()
+        let image_views = backbuffer
+            .into_iter()
             .map(|image| unsafe {
                 device
                     .create_image_view(
@@ -177,29 +165,22 @@ impl<B: Backend> Renderer<B> {
             };
 
             unsafe {
-               device
+                device
                     .create_render_pass(&[color_attachment], &[subpass], &[])
                     .expect("Out of memory")
             }
         };
 
-        let framebuffers = image_views.iter()
+        let framebuffers = image_views
+            .iter()
             .map(|image_view| unsafe {
                 device
-                    .create_framebuffer(
-                        &render_pass,
-                        vec![image_view],
-                        image_extent
-                    )
+                    .create_framebuffer(&render_pass, vec![image_view], image_extent)
                     .map_err(|_| "Couldn't create the framebuffer for the image_view!")
             })
             .collect::<Result<Vec<B::Framebuffer>, &str>>()?;
 
-        let (
-            image_available_semaphores,
-            render_complete_semaphores,
-            submission_complete_fence
-        ) = {
+        let (image_available_semaphores, render_complete_semaphores, submission_complete_fence) = {
             let mut image_available_semaphores: Vec<B::Semaphore> = vec![];
             let mut render_finished_semaphores: Vec<B::Semaphore> = vec![];
             let mut submission_complete_fence: Vec<B::Fence> = vec![];
@@ -227,21 +208,19 @@ impl<B: Backend> Renderer<B> {
             )
         };
 
-        Ok(
-            Renderer {
-                instance,
-                surface: ManuallyDrop::new(surface),
-                device,
-                command_pool: Some(command_pool),
-                swapchain: Some(swapchain),
-                image_views,
-                render_pass: Some(render_pass),
-                framebuffers,
-                image_available_semaphores,
-                render_complete_semaphores,
-                submission_complete_fence
-            }
-        )
+        Ok(Renderer {
+            instance,
+            surface: ManuallyDrop::new(surface),
+            device,
+            command_pool: Some(command_pool),
+            swapchain: Some(swapchain),
+            image_views,
+            render_pass: Some(render_pass),
+            framebuffers,
+            image_available_semaphores,
+            render_complete_semaphores,
+            submission_complete_fence,
+        })
     }
 }
 
@@ -263,9 +242,12 @@ impl<B: Backend> Drop for Renderer<B> {
             for image_view in self.image_views.drain(..) {
                 self.device.destroy_image_view(image_view);
             }
-            self.device.destroy_render_pass(self.render_pass.take().unwrap());
-            self.device.destroy_swapchain(self.swapchain.take().unwrap());
-            self.device.destroy_command_pool(self.command_pool.take().unwrap());
+            self.device
+                .destroy_render_pass(self.render_pass.take().unwrap());
+            self.device
+                .destroy_swapchain(self.swapchain.take().unwrap());
+            self.device
+                .destroy_command_pool(self.command_pool.take().unwrap());
             // up here ManuallyDrop gives us the inner resource with ownership
             // where `ptr::read` doesn't do anything just reads the resource
             // without manipulating the actual memory
@@ -288,11 +270,7 @@ fn create_backend(
             .expect("Failed to create a surface!")
     };
 
-    (
-        instance,
-        surface,
-        window
-    )
+    (instance, surface, window)
 }
 
 fn build_window(
