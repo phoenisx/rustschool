@@ -11,6 +11,10 @@ dx12 = ["gfx-backend-dx12"]
 vulkan = ["gfx-backend-vulkan"]
 
 [[bin]]
+name = "setup"
+path = "src/000-setup/main.rs"
+
+[[bin]]
 name = "show_window"
 path = "src/001-show_window/main.rs"
 

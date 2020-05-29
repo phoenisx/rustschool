@@ -31,4 +31,5 @@ impl<B: Backend> Renderer<B> {
 
 fn main() {
     log4rs::init_file("log4rs.yml", Default::default()).unwrap();
+    info!("Hello World")
 }
