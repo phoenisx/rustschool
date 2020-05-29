@@ -1,7 +1,15 @@
 use std::mem::ManuallyDrop;
 use std::ptr;
 
-use gfx_hal::{prelude::*, window as hal_window, Backend, Features, Instance};
+use gfx_hal::{
+    adapter::Adapter,
+    prelude::*,
+    window as hal_window,
+    queue::{family},
+    Backend,
+    Features,
+    Instance
+};
 use winit::{
     dpi::{LogicalSize, PhysicalSize},
     event, event_loop, window,
@@ -25,6 +33,12 @@ struct Renderer<B: Backend> {
     instance: B::Instance,
     // Vulkan backend surface object
     surface: ManuallyDrop<B::Surface>,
+    // Device Adpter, containing Physical and Queue details
+    adapter: Adapter<B>,
+    // Logical Device object
+    device: B::Device,
+    // Queue Group for rendering reference
+    queue_group: family::QueueGroup<B>,
 }
 
 impl<B: Backend> Renderer<B> {
@@ -39,7 +53,7 @@ impl<B: Backend> Renderer<B> {
             )
         };
 
-        let (device, queues, supported_family) = {
+        let (device, queue_group, supported_family) = {
             let supported_family = adapter
                 .queue_families
                 .iter()
@@ -70,6 +84,9 @@ impl<B: Backend> Renderer<B> {
         Renderer {
             instance,
             surface: ManuallyDrop::new(surface),
+            adapter,
+            device,
+            queue_group,
         }
     }
 }
