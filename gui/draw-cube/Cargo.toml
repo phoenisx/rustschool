@@ -23,32 +23,24 @@ name = "enumerate_devices"
 path = "src/002-enumerate_devices/main.rs"
 
 [[bin]]
-name = "command_buffers"
-path = "src/003-command_buffers/main.rs"
-
-[[bin]]
 name = "swap_chain"
-path = "src/004-swap_chain/main.rs"
-
-[[bin]]
-name = "image_views"
-path = "src/005-image_views/main.rs"
+path = "src/003-swap_chain/main.rs"
 
 [[bin]]
 name = "render_pass_init"
-path = "src/006-render_pass_init/main.rs"
+path = "src/004-render_pass_init/main.rs"
 
 [[bin]]
-name = "framebuffers"
-path = "src/007-framebuffers/main.rs"
+name = "command_buffers"
+path = "src/006-command_buffers/main.rs"
 
 [[bin]]
 name = "synchronization"
-path = "src/008-synchronization/main.rs"
+path = "src/007-synchronization/main.rs"
 
 [[bin]]
 name = "color_background"
-path = "src/009-color_background/main.rs"
+path = "src/008-color_background/main.rs"
 
 [[bin]]
 name = "draw-cube"
@@ -60,7 +52,8 @@ gfx-hal = "0.5.0"
 log = "0.4.0"
 log4rs = "0.11.0"
 
-[dependencies.gfx-backend-vulkan]
+
+[target.'cfg(not(any(target_os = "macos", target_os = "windows")))'.dependencies.gfx-backend-vulkan]
 version = "0.5.0"
 features = ["x11"]
 optional = true
@@ -69,6 +62,6 @@ optional = true
 version = "0.5.0"
 optional = true
 
-[target.'cfg(windows)'.dependencies.gfx-backend-dx12]
+[target.'cfg(target_os = "macos")'.dependencies.gfx-backend-dx12]
 version = "0.5.0"
 optional = true

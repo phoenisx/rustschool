@@ -2,10 +2,13 @@ use std::mem::ManuallyDrop;
 use std::ptr;
 
 use gfx_hal::{
+    adapter::Adapter,
     command,
     format::{self as hal_format},
     pool::CommandPoolCreateFlags,
     prelude::*,
+    pso::{Rect, Viewport},
+    queue::{family},
     window as hal_window, Backend, Features, Instance,
 };
 use winit::{
@@ -27,14 +30,22 @@ const APP_NAME: &'static str = "Show Window";
 const WINDOW_SIZE: [u32; 2] = [1280, 768];
 
 struct Renderer<B: Backend> {
+    window_dims: hal_window::Extent2D,
+    viewport: Viewport,
     // Vulkan backend instance object
     instance: B::Instance,
     // Vulkan backend surface object
     surface: ManuallyDrop<B::Surface>,
+    // Device Adpter, containing Physical and Queue details
+    adapter: Adapter<B>,
     // Logical Device object
     device: B::Device,
-    // Swapchain instance
-    swapchain: Option<B::Swapchain>,
+    // Queue Group for rendering reference
+    queue_group: family::QueueGroup<B>,
+    // Collection Swapchain Image, Empty buffer initially
+    frame_count: usize,
+    // Desired Format / Selected Format
+    format: hal_format::Format,
 }
 
 impl<B: Backend> Renderer<B> {
@@ -53,7 +64,7 @@ impl<B: Backend> Renderer<B> {
             )
         };
 
-        let (device, queues, supported_family) = {
+        let (device, queue_group, supported_family) = {
             let supported_family = adapter
                 .queue_families
                 .iter()
@@ -76,19 +87,11 @@ impl<B: Backend> Renderer<B> {
             )
         };
 
-        let (command_pool, mut command_buffer) = unsafe {
-            let mut command_pool = device
-                .create_command_pool(queues.family, CommandPoolCreateFlags::empty())
-                .expect("Out of memory");
-
-            let command_buffer = command_pool.allocate_one(command::Level::Primary);
-
-            (command_pool, command_buffer)
-        };
-
-        // Get Surface Capabilities
-        let (swapchain, backbuffer, extent, format) = {
+        // Configure Swapchain
+        let (frame_count, format) = {
             let caps = surface.capabilities(&adapter.physical_device);
+
+            debug!("Capabilities: {:#?}", caps);
 
             let supported_formats = surface.supported_formats(&adapter.physical_device);
             // We need a supported format for the OS Window, so that Images drawn on
@@ -101,38 +104,75 @@ impl<B: Backend> Renderer<B> {
                     .unwrap_or(formats[0])
             });
 
-            debug!("Selected Format:: {:#?}", format);
-
             let swap_config = hal_window::SwapchainConfig::from_caps(&caps, format, init_extent);
-            let extent = swap_config.extent.to_extent();
-            let (swapchain, backbuffer) = unsafe {
-                device
-                    .create_swapchain(&mut surface, swap_config, None)
-                    .expect("Can't create swapchain")
+            let image_extent = swap_config.extent.to_extent();
+
+            unsafe {
+                surface
+                    .configure_swapchain(&device, swap_config)
+                    .expect("Can't configure swapchain");
             };
 
-            (swapchain, backbuffer, extent, format)
+            (3, format)
+        };
+
+        let viewport = Viewport {
+            rect: Rect {
+                x: 0,
+                y: 0,
+                w: init_extent.width as _,
+                h: init_extent.height as _,
+            },
+            depth: 0.0..1.0,
         };
 
         Renderer {
+            window_dims: init_extent,
+            viewport,
             instance,
             surface: ManuallyDrop::new(surface),
+            adapter,
             device,
-            swapchain: Some(swapchain),
+            queue_group,
+            frame_count,
+            format,
         }
+    }
+
+    fn set_dims(&mut self, dims: PhysicalSize<u32>) {
+        self.window_dims = hal_window::Extent2D {
+            width: dims.width,
+            height: dims.height,
+        };
+    }
+
+    fn recreate_swapchain(&mut self) {
+        let caps = self.surface.capabilities(&self.adapter.physical_device);
+        let swap_config =
+            hal_window::SwapchainConfig::from_caps(&caps, self.format, self.window_dims);
+        println!("SwapConfig Changed: {:?}", swap_config);
+        let image_extent = swap_config.extent.to_extent();
+
+        unsafe {
+            self.surface
+                .configure_swapchain(&self.device, swap_config)
+                .expect("Can't create swapchain");
+        }
+
+        self.viewport.rect.w = image_extent.width as _;
+        self.viewport.rect.h = image_extent.height as _;
     }
 }
 
 impl<B: Backend> Drop for Renderer<B> {
     fn drop(&mut self) {
         unsafe {
+            self.surface.unconfigure_swapchain(&self.device);
             // up here ManuallyDrop gives us the inner resource with ownership
             // where `ptr::read` doesn't do anything just reads the resource
             // without manipulating the actual memory
             let surface = ManuallyDrop::into_inner(ptr::read(&self.surface));
             self.instance.destroy_surface(surface);
-            self.device
-                .destroy_swapchain(self.swapchain.take().unwrap());
         }
     }
 }
@@ -187,7 +227,7 @@ fn main() {
     let (window_builder, extent) = build_window(&ev_loop);
     let (instance, surface, window) = create_backend(window_builder, &ev_loop);
 
-    let renderer = Renderer::<back::Backend>::new(instance, surface, extent);
+    let mut renderer = Renderer::<back::Backend>::new(instance, surface, extent);
 
     ev_loop.run(move |event, _, control_flow| {
         *control_flow = event_loop::ControlFlow::Wait;
@@ -199,7 +239,8 @@ fn main() {
                         *control_flow = event_loop::ControlFlow::Exit
                     }
                     event::WindowEvent::Resized(dims) => {
-                        debug!("RESIZE EVENT");
+                        renderer.set_dims(dims);
+                        renderer.recreate_swapchain();
                     }
                     event::WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                         // Will get called whenever the screen scale factor (DPI) changes,
