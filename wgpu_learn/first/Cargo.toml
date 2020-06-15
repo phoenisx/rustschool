@@ -1,0 +1,10 @@
+[package]
+name = "first"
+version = "0.1.0"
+authors = ["Shub1427 <shub1493biswas@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+wgpu = "0.5"
+winit = "0.22"
+futures = "0.3"
