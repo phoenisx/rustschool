@@ -5,6 +5,7 @@ authors = ["Shub1427 <shub1493biswas@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-wgpu = "0.5"
+# We would be using master for our examples as it has latest examples.
+wgpu = { git = "https://github.com/gfx-rs/wgpu-rs", rev = "5c7e4e7cb27ba87c6cb0a85b9ccf253ab342563c" }
 winit = "0.22"
 futures = "0.3"
