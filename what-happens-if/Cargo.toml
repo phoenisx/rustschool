@@ -5,3 +5,4 @@ authors = ["Shub1427 <shub1493biswas@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+tokio = { version = "1", features = ["full"] }
